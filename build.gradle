@@ -1,16 +1,29 @@
 plugins {
+    id 'java-library'
     id 'java'
+    id "com.jfrog.artifactory" version "4.13.0"
 }
 
-group 'de.vcs'
+group 'oder'
 version '1.0-SNAPSHOT'
 
 sourceCompatibility = 1.8
 
 repositories {
+    //due to wrong uploads to mavencentral geotools repo must appear on top of the list
+    maven {
+        url 'http://download.osgeo.org/webdav/geotools'
+    }
+    maven {
+        url 'https://dl.bintray.com/3dcitydb/maven'
+    }
+    maven {
+        url 'http://artifactory/artifactory/libs-snapshot'
+    }
     mavenCentral()
 }
 
 dependencies {
-    testCompile group: 'junit', name: 'junit', version: '4.12'
+    compile 'odr:opendrive4j:0.1.0-SNAPSHOT'
+    compile 'org.citydb:impexp-core:4.2.1'
 }
