@@ -4,6 +4,7 @@ import de.vcs.area.LaneAreaGenerator;
 import de.vcs.area.RoadAreaGenerator;
 import de.vcs.area.worker.AreaWorkerFactory;
 import de.vcs.area.worker.AreaWorkerPool;
+import de.vcs.datatypes.TestContainer;
 
 public class WorkerMain {
 
@@ -11,12 +12,11 @@ public class WorkerMain {
         int poolsizeMax = Runtime.getRuntime().availableProcessors();
         int poolsizeMin = poolsizeMax;
         int queueSize = 1000;
+        TestContainer container = new TestContainer();
         AreaWorkerFactory factory = new AreaWorkerFactory();
         AreaWorkerPool pool = new AreaWorkerPool(poolsizeMin, poolsizeMax,
                 factory, queueSize);
-        for (int i = 0; i < 100; i++) {
-            pool.addWork(new LaneAreaGenerator());
-            pool.addWork(new RoadAreaGenerator());
-        }
+        container.getRoad().forEach(o -> System.out.println(o));
+        container.getLane().forEach(o -> System.out.println(o));
     }
 }

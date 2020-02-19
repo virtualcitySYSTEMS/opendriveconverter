@@ -15,6 +15,6 @@ public class AreaWorker extends DefaultWorker<AreaGenerator> {
 
     @Override
     public void shutdown() {
-        log.debug("Area worker died!");
+        log.info("Area worker died!");
     }
 }

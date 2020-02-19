@@ -10,7 +10,7 @@ import java.util.logging.*;
 public class ODRLogger {
 
     private static ODRLogger instance;
-    private final static Logger LOGGER = Logger.getLogger("SunPotLogger");
+    private final static Logger LOGGER = Logger.getLogger("ODRLogger");
     private static Handler consoleHandler;
     private static Handler fileHandler;
     private static final SimpleDateFormat dateFormat = new SimpleDateFormat(

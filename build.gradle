@@ -26,4 +26,5 @@ repositories {
 dependencies {
     compile 'odr:opendrive4j:0.1.0-SNAPSHOT'
     compile 'org.citydb:impexp-core:4.2.1'
+    compile 'org.locationtech.jts:jts-core:1.16.1'
 }
