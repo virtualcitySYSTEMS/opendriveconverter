@@ -1,6 +1,6 @@
 package de.vcs.utils.math;
 
-import de.vcs.datatypes.PolynomValues;
+import de.vcs.datatypes.PolynomValue;
 import de.vcs.model.odr.geometry.ParamPolynom;
 
 public class ParamPolynomHelper {
@@ -13,8 +13,8 @@ public class ParamPolynomHelper {
         return p.getaV() + p.getbV() * ds + p.getcV() * Math.pow(ds, 2) + p.getdV() * Math.pow(ds, 3);
     }
 
-    public static PolynomValues calcPolynomValues(double ds, ParamPolynom p) {
-        return new PolynomValues(
+    public static PolynomValue calcPolynomValues(double ds, ParamPolynom p) {
+        return new PolynomValue(
                 (p.getaU() + p.getbU() * ds + p.getcU() * Math.pow(ds, 2) + p.getdU() * Math.pow(ds, 3)),
                 (p.getaV() + p.getbV() * ds + p.getcV() * Math.pow(ds, 2) + p.getdV() * Math.pow(ds, 3)));
     }

@@ -1,3 +1,5 @@
+package de.vcs.utils;
+
 import de.vcs.model.odr.geometry.ParamPolynom;
 import de.vcs.utils.math.ParamPolynomHelper;
 import org.junit.Assert;

@@ -3,19 +3,19 @@ package de.vcs.datatypes;
 /**
  * Serves as container class for u and v values calculated by {@link de.vcs.utils.math.ParamPolynomHelper}
  */
-public class PolynomValues {
+public class PolynomValue {
 
     private double u;
     private double v;
 
-    public PolynomValues() {
+    public PolynomValue() {
     }
 
     /**
      * @param u u value of polynom
      * @param v v value of polynom
      */
-    public PolynomValues(double u, double v) {
+    public PolynomValue(double u, double v) {
         this.u = u;
         this.v = v;
     }
