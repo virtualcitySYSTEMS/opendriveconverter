@@ -36,7 +36,7 @@ public class MainCLI {
 
     public static void main(String[] args) {
         try {
-            MainCLI mainCLI = new MainCLI("src/main/resources/Crossing8Course.xodr");
+            MainCLI mainCLI = new MainCLI("src/main/resources/realRoadExample.xodr");
             mainCLI.doMain();
         } catch (Exception e) {
             e.printStackTrace();
@@ -70,9 +70,6 @@ public class MainCLI {
     }
 
     private void buildAreaParallel() {
-        odr.getRoads().forEach(o -> System.out.println("Alt: " + o.getName()));
         odr.getRoads().forEach(o -> areaWorkerPool.addWork(new RoadAreaGenerator(o)));
-        odr.getRoads().forEach(o -> areaWorkerPool.addWork(new LaneAreaGenerator(o.getLanes())));
-        odr.getRoads().forEach(o -> System.out.println("Neu: " + o.getName()));
     }
 }
