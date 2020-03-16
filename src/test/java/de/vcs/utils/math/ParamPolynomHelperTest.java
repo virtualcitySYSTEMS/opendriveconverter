@@ -3,6 +3,7 @@ package de.vcs.utils.math;
 import de.vcs.model.odr.geometry.ParamPolynom;
 import org.junit.Assert;
 import org.junit.Test;
+import org.locationtech.jts.geom.Point;
 
 public class ParamPolynomHelperTest {
 
@@ -18,5 +19,14 @@ public class ParamPolynomHelperTest {
                 0.0);
         Assert.assertEquals("V ParamPoly3 Test 0.5", -0.0005581377006285267,
                 ParamPolynomHelper.calcParamPolynomValueV(0.5, p), 0.0);
+    }
+
+    @Test
+    public void testPoint() {
+        ParamPolynom p = new ParamPolynom(0.0, 1.0, -2.803488692261e-07, -3.370395926169e-06, 0.0, 5.551115123126e-17,
+                -2.231025430440e-03, -3.050744148436e-06);
+        Point point = ParamPolynomHelper.calcUVPointPerpendicularToCurve(1.0, 2.0, p);
+        System.out.println(point.getX());
+        System.out.println(point.getY());
     }
 }

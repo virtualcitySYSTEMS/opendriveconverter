@@ -49,6 +49,7 @@ public class MainCLI {
         parseODRFile(odrFile);
         initializeAreaWorkerFactory();
         buildAreaParallel();
+        printGML();
     }
 
     private void initializeODRFactory() throws XMLObjectsException, XMLReadException {
@@ -71,5 +72,11 @@ public class MainCLI {
 
     private void buildAreaParallel() {
         odr.getRoads().forEach(o -> areaWorkerPool.addWork(new RoadAreaGenerator(o)));
+    }
+
+    private void printGML() {
+        odr.getRoads().get(0).getGmlGeometries().forEach(g -> {
+            System.out.println(g.getCoordinate().getX());
+        });
     }
 }

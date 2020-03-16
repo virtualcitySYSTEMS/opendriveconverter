@@ -1,12 +1,10 @@
 package de.vcs.utils.math;
 
-import de.vcs.model.odr.geometry.Arc;
-import de.vcs.model.odr.geometry.Polynom;
+import de.vcs.model.odr.geometry.*;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.Objects;
-import java.util.TreeSet;
+import java.util.TreeMap;
 
 public class STCompareTest {
 
@@ -16,44 +14,42 @@ public class STCompareTest {
         p1.getLinearReference().setS(1.1);
         Polynom p2 = new Polynom();
         p2.getLinearReference().setS(3.2);
-        Polynom p = new Polynom();
-        p.getLinearReference().setS(2.1);
-        TreeSet<Polynom> lanes = new TreeSet<>();
-        lanes.add(p2);
-        lanes.add(p1);
+        TreeMap<Double, Polynom> lanes = new TreeMap<>();
+        lanes.put(3.2, p2);
+        lanes.put(1.1, p1);
         Assert.assertEquals("Test based on linearReference - Polynom", 1.1,
-                Objects.requireNonNull(lanes.floor(p)).getLinearReference().getS(), 0.0);
+                lanes.floorEntry(2.2).getValue().getLinearReference().getS(), 0.0);
     }
 
     @Test
     public void comparableTestArc() {
-        Arc a = new Arc();
-        a.getLinearReference().setS(11.2222);
+        double s = 9.324432;
+        double sLow = 8.9;
+        double sHigh = 12.3;
         Arc a1 = new Arc();
-        a1.getLinearReference().setS(8.9);
+        a1.getLinearReference().setS(sLow);
         Arc a2 = new Arc();
-        a2.getLinearReference().setS(13.54353);
-        TreeSet<Arc> arcs = new TreeSet<>();
-        arcs.add(a1);
-        arcs.add(a2);
-        Assert.assertEquals("Test based on linearReference - Arc", 8.9,
-                Objects.requireNonNull(arcs.floor(a)).getLinearReference().getS(), 0.0);
+        a2.getLinearReference().setS(sHigh);
+        TreeMap<Double, Arc> arcs = new TreeMap<>();
+        arcs.put(sLow, a1);
+        arcs.put(sHigh, a2);
+        Assert.assertEquals("Test based on linearReference - Arc", sLow,
+                arcs.floorEntry(s).getValue().getLinearReference().getS(), 0.0);
     }
 
     @Test
     public void compareTSTransform() {
-        Arc a = new Arc();
-        a.getStTransform().setsOffset(10.0);
-        a.setId("Tester");
+        double s = 9.324432;
+        double sLow = 8.9;
+        double sHigh = 12.3;
         Arc a1 = new Arc();
-        a1.getStTransform().setsOffset(8.0);
-        a1.setId("Pre");
+        a1.getStTransform().setsOffset(sLow);
         Arc a2 = new Arc();
-        a2.getStTransform().setsOffset(12.0);
-        a2.setId("Post");
-        TreeSet<Arc> arcs = new TreeSet<>();
-        arcs.add(a1);
-        arcs.add(a2);
-        Assert.assertEquals("Test based on STTransform - Arc", "Pre", Objects.requireNonNull(arcs.floor(a)).getId());
+        a2.getStTransform().setsOffset(sHigh);
+        TreeMap<Double, Arc> arcs = new TreeMap<>();
+        arcs.put(sLow, a1);
+        arcs.put(sHigh, a2);
+        Assert.assertEquals("Test based on STTransform - Arc", sLow,
+                arcs.floorEntry(s).getValue().getStTransform().getsOffset(), 0.0);
     }
 }

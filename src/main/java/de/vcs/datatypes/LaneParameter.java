@@ -1,19 +1,20 @@
 package de.vcs.datatypes;
 
-import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.Point;
 
 public class LaneParameter {
 
     private double width;
-    private Coordinate coord;
+    private Point point;
 
     public LaneParameter() {
-        coord = new Coordinate();
+        point = new GeometryFactory().createPoint();
     }
 
-    public LaneParameter(double width, Coordinate coord) {
+    public LaneParameter(double width, Point point) {
         this.width = width;
-        this.coord = coord;
+        this.point = point;
     }
 
     public double getWidth() {
@@ -24,11 +25,11 @@ public class LaneParameter {
         this.width = width;
     }
 
-    public Coordinate getCoord() {
-        return coord;
+    public Point getPoint() {
+        return point;
     }
 
-    public void setCoord(Coordinate coord) {
-        this.coord = coord;
+    public void setPoint(Point point) {
+        this.point = point;
     }
 }
