@@ -15,5 +15,6 @@ public class AreaWorker extends DefaultWorker<AreaGenerator> {
 
     @Override
     public void shutdown() {
+        System.out.println("Worker shut down");
     }
 }

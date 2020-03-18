@@ -12,7 +12,7 @@ public class LaneParameter {
         point = new GeometryFactory().createPoint();
     }
 
-    public LaneParameter(double width, Point point) {
+    public LaneParameter(int id, double width, Point point) {
         this.width = width;
         this.point = point;
     }

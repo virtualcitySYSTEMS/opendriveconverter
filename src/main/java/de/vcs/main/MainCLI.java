@@ -71,7 +71,13 @@ public class MainCLI {
     }
 
     private void buildAreaParallel() {
+        areaWorkerPool.prestartCoreWorkers();
         odr.getRoads().forEach(o -> areaWorkerPool.addWork(new RoadAreaGenerator(o)));
+        try {
+            areaWorkerPool.shutdownAndWait();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     private void printGML() {
