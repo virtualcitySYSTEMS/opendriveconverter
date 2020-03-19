@@ -24,13 +24,29 @@ public class ParamPolynomHelper {
     }
 
     public static Point calcUVPointPerpendicularToCurve(double ds, double distance, ParamPolynom p) {
+        Point uvpoint = calcUVPoint(ds, p);
+        Point nvpoint = calcNormalVector(ds, uvpoint, p);
+        return new GeometryFactory().createPoint(
+                new Coordinate(uvpoint.getX() - nvpoint.getY() * distance, uvpoint.getY() + nvpoint.getY() * distance));
+    }
+
+    public static Point calcUVPointPerpendicularToCurve(double ds, double distance, Point uvpoint, Point nvpoint) {
+        return new GeometryFactory().createPoint(
+                new Coordinate(uvpoint.getX() - nvpoint.getY() * distance, uvpoint.getY() + nvpoint.getY() * distance));
+    }
+
+    public static Point calcUVPoint(double ds, ParamPolynom p) {
         double u = calcParamPolynomValueU(ds, p);
         double v = calcParamPolynomValueV(ds, p);
+        return new GeometryFactory().createPoint(new Coordinate(u, v));
+    }
+
+    public static Point calcNormalVector(double ds, Point point, ParamPolynom p) {
         double tu = getFirstDerivationU(ds, p);
         double tv = getFirstDerivationV(ds, p);
-        double tun = normalizeComponent(tu, tv);
-        double tvn = normalizeComponent(tv, tu);
-        return new GeometryFactory().createPoint(new Coordinate(u - tvn * distance, v + tun * distance));
+        double tun = ODRMath.normalizeComponent(tu, tv);
+        double tvn = ODRMath.normalizeComponent(tv, tu);
+        return new GeometryFactory().createPoint(new Coordinate(point.getX() - tvn, point.getY() + tun);
     }
 
     private static double getFirstDerivationU(double ds, ParamPolynom p) {
@@ -39,9 +55,5 @@ public class ParamPolynomHelper {
 
     private static double getFirstDerivationV(double ds, ParamPolynom p) {
         return p.getbV() + 2 * ds * p.getcV() + 3 * p.getdV() * Math.pow(ds, 2);
-    }
-
-    private static double normalizeComponent(double a, double b) {
-        return a / Math.sqrt(Math.pow(a, 2) + Math.pow(b, 2));
     }
 }
