@@ -75,9 +75,6 @@ public class RoadAreaGenerator extends AbstractAreaGenerator implements AreaGene
         Polynom poly = road.getLanes().getLaneOffsets().floorEntry(ds).getValue();
         double width = PolynomHelper.calcPolynomValue(ds, poly);
         Point p = ParamPolynomHelper.calcUVPointPerpendicularToCurve(ds, width, uvpoint, nvpoint);
-        p = (Point) Transformation.transform(p, poly.getIntertialTransform().getHdg(),
-                poly.getInertialReference().getPos().getValue().get(0),
-                poly.getInertialReference().getPos().getValue().get(1));
         return p;
     }
 

@@ -46,7 +46,7 @@ public class ParamPolynomHelper {
         double tv = getFirstDerivationV(ds, p);
         double tun = ODRMath.normalizeComponent(tu, tv);
         double tvn = ODRMath.normalizeComponent(tv, tu);
-        return new GeometryFactory().createPoint(new Coordinate(point.getX() - tvn, point.getY() + tun);
+        return new GeometryFactory().createPoint(new Coordinate(point.getX() - tvn, point.getY() + tun));
     }
 
     private static double getFirstDerivationU(double ds, ParamPolynom p) {
