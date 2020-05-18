@@ -1,10 +1,9 @@
 package de.vcs.main;
 
-import de.vcs.area.LaneAreaGenerator;
 import de.vcs.area.RoadAreaGenerator;
-import de.vcs.area.worker.AreaWorker;
 import de.vcs.area.worker.AreaWorkerFactory;
 import de.vcs.area.worker.AreaWorkerPool;
+import de.vcs.converter.GeoJsonConverter;
 import de.vcs.model.odr.core.OpenDRIVE;
 import de.vcs.utils.log.ODRLogger;
 import org.xmlobjects.XMLObjects;
@@ -14,8 +13,8 @@ import org.xmlobjects.stream.XMLReadException;
 import org.xmlobjects.stream.XMLReader;
 import org.xmlobjects.stream.XMLReaderFactory;
 
-import java.awt.geom.Area;
 import java.io.File;
+import java.io.IOException;
 
 public class MainCLI {
 
@@ -23,6 +22,7 @@ public class MainCLI {
     XMLObjects xmlObjects;
     XMLReaderFactory xmlReaderFactory;
     File odrFile;
+    File outputFile;
     AreaWorkerFactory areaWorkerFactory;
     AreaWorkerPool areaWorkerPool;
     int poolsizeMax = Runtime.getRuntime().availableProcessors();
@@ -30,13 +30,14 @@ public class MainCLI {
     int queueSize = 1000;
     ODRLogger log;
 
-    public MainCLI(String odrFileName) {
+    public MainCLI(String odrFileName, String outFileName) {
         this.odrFile = new File(odrFileName);
+        this.outputFile = new File(outFileName);
     }
 
     public static void main(String[] args) {
         try {
-            MainCLI mainCLI = new MainCLI("src/main/resources/realRoadExample.xodr");
+            MainCLI mainCLI = new MainCLI("src/main/resources/realRoadExample.xodr", "src/main/resources/realRoadExample.json");
             mainCLI.doMain();
         } catch (Exception e) {
             e.printStackTrace();
@@ -49,9 +50,9 @@ public class MainCLI {
         parseODRFile(odrFile);
         initializeAreaWorkerFactory();
         buildAreaParallel();
+        writeODRFile(odr);
         printGML();
     }
-
     private void initializeODRFactory() throws XMLObjectsException, XMLReadException {
         xmlObjects = XMLObjects.newInstance();
         xmlReaderFactory = XMLReaderFactory.newInstance(xmlObjects);
@@ -69,6 +70,16 @@ public class MainCLI {
             odr = xmlObjects.fromXML(reader, OpenDRIVE.class);
         }
     }
+
+    private void writeODRFile(OpenDRIVE odr) {
+        GeoJsonConverter converter = new GeoJsonConverter();
+        try {
+            converter.write(odr, outputFile);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
 
     private void buildAreaParallel() {
         areaWorkerPool.prestartCoreWorkers();
