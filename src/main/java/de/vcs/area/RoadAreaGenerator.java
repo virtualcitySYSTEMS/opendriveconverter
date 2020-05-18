@@ -6,6 +6,7 @@ import de.vcs.datatypes.LaneSectionParameter;
 import de.vcs.model.odr.geometry.Line;
 import de.vcs.model.odr.geometry.ParamPolynom;
 import de.vcs.model.odr.geometry.Polynom;
+import de.vcs.model.odr.lane.Lane;
 import de.vcs.model.odr.lane.LaneSection;
 import de.vcs.model.odr.road.Road;
 import de.vcs.utils.geometry.Discretisation;
@@ -36,6 +37,21 @@ public class RoadAreaGenerator extends AbstractAreaGenerator implements AreaGene
         applySRunner();
     }
 
+    private void apply(){
+        sRunner.forEach(s->{
+            // Reference line points
+            ParamPolynom ppoly = (ParamPolynom) road.getPlanView().getOdrGeometries().floorEntry(s).getValue();
+            Point uvpoint = ParamPolynomHelper.calcUVPoint(s, ppoly);
+            uvpoint = (Point) Transformation.transform(uvpoint, ppoly.getIntertialTransform().getHdg(),
+                    ppoly.getInertialReference().getPos().getValue().get(0),
+                    ppoly.getInertialReference().getPos().getValue().get(1));
+            Point nvpoint = ParamPolynomHelper.calcNormalVector(s, uvpoint, ppoly);
+            nvpoint = (Point) Transformation.transform(nvpoint, ppoly.getIntertialTransform().getHdg(),
+                    ppoly.getInertialReference().getPos().getValue().get(0),
+                    ppoly.getInertialReference().getPos().getValue().get(1));
+        });
+    }
+
     private void applySRunner() {
         sRunner.forEach(s -> {
             LaneSectionParameter lsp = new LaneSectionParameter();
@@ -58,6 +74,7 @@ public class RoadAreaGenerator extends AbstractAreaGenerator implements AreaGene
         });
     }
 
+    //TODO not needed?
     private TreeMap<Integer, LaneParameter> calcLaneWidths(double ds, Point uvpoint, Point nvpoint, LaneSection ls) {
         TreeMap<Integer, LaneParameter> map = new TreeMap<>();
         ls.getLeftLanes().forEach(ll -> {
@@ -69,6 +86,13 @@ public class RoadAreaGenerator extends AbstractAreaGenerator implements AreaGene
             map.put(ll.getId(), lp);
         });
         return map;
+    }
+
+    private double calcLaneWidth(double s, Lane lane, LaneSection laneSection){
+        double ds = s - laneSection.getLinearReference().getS();
+        Polynom poly = lane.getWidths().floorEntry(ds).getValue();
+        double swidth = ds - poly.getStTransform().getsOffset();
+        return PolynomHelper.calcPolynomValue(swidth, poly);
     }
 
     private Point calcLaneOffsetPoints(double ds, Point uvpoint, Point nvpoint) {
