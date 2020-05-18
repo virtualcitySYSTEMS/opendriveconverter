@@ -3,6 +3,7 @@ package de.vcs.main;
 import de.vcs.area.RoadAreaGenerator;
 import de.vcs.area.worker.AreaWorkerFactory;
 import de.vcs.area.worker.AreaWorkerPool;
+import de.vcs.converter.FormatConverter;
 import de.vcs.converter.GeoJsonConverter;
 import de.vcs.model.odr.core.OpenDRIVE;
 import de.vcs.utils.log.ODRLogger;
@@ -15,6 +16,8 @@ import org.xmlobjects.stream.XMLReaderFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MainCLI {
 
@@ -72,7 +75,10 @@ public class MainCLI {
     }
 
     private void writeODRFile(OpenDRIVE odr) {
+        List<FormatConverter> converters = new ArrayList<>();
         GeoJsonConverter converter = new GeoJsonConverter();
+        converters.add(converter);
+        converters.stream().forEach(c -> c.convertFromODR(odr));
         try {
             converter.write(odr, outputFile);
         } catch (IOException e) {
