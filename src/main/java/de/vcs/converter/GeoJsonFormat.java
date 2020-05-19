@@ -5,7 +5,7 @@ import org.opengis.feature.simple.SimpleFeature;
 import java.util.ArrayList;
 import java.util.List;
 
-public class GeoJsonFormat {
+public class GeoJsonFormat extends AbstractFormat {
 
     private List<SimpleFeature> features = new ArrayList<SimpleFeature>();
 

@@ -3,6 +3,7 @@ package de.vcs.main;
 import de.vcs.area.RoadAreaGenerator;
 import de.vcs.area.worker.AreaWorkerFactory;
 import de.vcs.area.worker.AreaWorkerPool;
+import de.vcs.converter.AbstractFormat;
 import de.vcs.converter.FormatConverter;
 import de.vcs.converter.GeoJsonConverter;
 import de.vcs.model.odr.core.OpenDRIVE;
@@ -76,16 +77,18 @@ public class MainCLI {
 
     private void writeODRFile(OpenDRIVE odr) {
         List<FormatConverter> converters = new ArrayList<>();
-        GeoJsonConverter converter = new GeoJsonConverter();
-        converters.add(converter);
-        converters.stream().forEach(c -> c.convertFromODR(odr));
-        try {
-            converter.write(odr, outputFile);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        converters.add(new GeoJsonConverter(GeoJsonConverter::convertRoads));
+        converters.add(new GeoJsonConverter(GeoJsonConverter::convertLanes));
+        // TODO: converters.add(new GeoJsonConverter(CityGMLConverter::convertRoads));
+        converters.stream().forEach(c -> {
+            AbstractFormat format = c.convertFromODR(odr);
+            try {
+                c.write(format, outputFile);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
     }
-
 
     private void buildAreaParallel() {
         areaWorkerPool.prestartCoreWorkers();
