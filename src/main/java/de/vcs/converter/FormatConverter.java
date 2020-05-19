@@ -10,9 +10,11 @@ import java.util.function.Function;
 public class FormatConverter<T extends AbstractFormat> implements ConverterStrategy<T> {
 
     private final Function<OpenDRIVE, T> fromODR;
+    private File outputFile;
 
-    public FormatConverter(Function<OpenDRIVE, T> fromODR) {
+    public FormatConverter(Function<OpenDRIVE, T> fromODR, File outputFile) {
         this.fromODR = fromODR;
+        this.outputFile = outputFile;
     }
 
     public final T convertFromODR(OpenDRIVE odr) {
@@ -20,6 +22,14 @@ public class FormatConverter<T extends AbstractFormat> implements ConverterStrat
     }
 
     @Override
-    public void write(T format, File outputFile) throws IOException {
+    public void write(T format) throws IOException {
+    }
+
+    public File getOutputFile() {
+        return outputFile;
+    }
+
+    public void setOutputFile(File outputFile) {
+        this.outputFile = outputFile;
     }
 }

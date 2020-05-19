@@ -77,13 +77,12 @@ public class MainCLI {
 
     private void writeODRFile(OpenDRIVE odr) {
         List<FormatConverter> converters = new ArrayList<>();
-        converters.add(new GeoJsonConverter(GeoJsonConverter::convertRoads));
-        converters.add(new GeoJsonConverter(GeoJsonConverter::convertLanes));
-        // TODO: converters.add(new GeoJsonConverter(CityGMLConverter::convertRoads));
-        converters.stream().forEach(c -> {
-            AbstractFormat format = c.convertFromODR(odr);
+        converters.add(new GeoJsonConverter(GeoJsonConverter::convertRoads, outputFile));
+//        converters.add(new GeoJsonConverter(GeoJsonConverter::convertLanes));
+        // TODO: converters.add(new CityGMLConverter(CityGMLConverter::convertRoads));
+        converters.forEach(c -> {
             try {
-                c.write(format, outputFile);
+                c.write(c.convertFromODR(odr));
             } catch (IOException e) {
                 e.printStackTrace();
             }

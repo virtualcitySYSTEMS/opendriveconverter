@@ -8,5 +8,5 @@ import java.io.File;
 import java.io.IOException;
 
 public interface ConverterStrategy<T extends AbstractFormat> {
-    void write(T format, File outputFile) throws IOException;
+    void write(T format) throws IOException;
 }
