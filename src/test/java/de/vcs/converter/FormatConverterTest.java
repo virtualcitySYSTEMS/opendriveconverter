@@ -9,16 +9,9 @@ import org.junit.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Polygon;
-import org.xmlobjects.XMLObjects;
-import org.xmlobjects.XMLObjectsException;
-import org.xmlobjects.builder.ObjectBuildException;
-import org.xmlobjects.stream.XMLReadException;
-import org.xmlobjects.stream.XMLReader;
-import org.xmlobjects.stream.XMLReaderFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 

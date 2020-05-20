@@ -28,6 +28,7 @@ dependencies {
     compile 'odr:opendrive4j:0.1.0-SNAPSHOT'
     compile 'org.citydb:impexp-core:4.2.1'
     compile 'org.geotools:gt-epsg-hsql:22.2'
+    compile 'org.geotools:gt-epsg-extension:22.2'
     compile 'org.geotools:gt-referencing:22.2'
     compile 'org.geotools:gt-geometry:22.2'
     compile 'org.geotools:gt-geojson:22.2'
