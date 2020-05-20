@@ -4,11 +4,10 @@ import de.vcs.model.odr.geometry.STHPosition;
 import de.vcs.model.odr.geometry.UVZPosition;
 import de.vcs.model.odr.object.AbstractObject;
 import de.vcs.model.odr.object.Outline;
+import de.vcs.model.odr.object.RepeatedObject;
 import de.vcs.model.odr.road.Road;
 import de.vcs.utils.geometry.Transformation;
 import org.locationtech.jts.geom.*;
-
-import java.util.ArrayList;
 
 public class ObjectAreaGenerator extends AbstractAreaGenerator implements AreaGenerator {
 
@@ -20,16 +19,18 @@ public class ObjectAreaGenerator extends AbstractAreaGenerator implements AreaGe
 
     @Override
     public void generateArea() {
-        apply();
+        apply2D();
     }
 
-    private void apply() {
+    private void apply2D() {
         for(AbstractObject obj : road.getObjects()) {
-            if (obj.getOutlines().size() < 1) {
+            if (obj.getOutlines().size() > 0) {
+                addComplexOutline(obj);
+            } else if (obj instanceof RepeatedObject) { // TODO change obj.getRepeat().size > 0
+               addRepeatedOutline(obj);
+            } else {
                 Point point = addPoint(obj);
                 addSimpleOutline(obj, point);
-            } else {
-                addComplexOutline(obj);
             }
         }
     }
@@ -99,5 +100,9 @@ public class ObjectAreaGenerator extends AbstractAreaGenerator implements AreaGe
             GeometryFactory geometryFactory = new GeometryFactory();
             obj.getGmlGeometries().add(geometryFactory.createPolygon(coordinates.toCoordinateArray()));
         }
+    }
+
+    private void addRepeatedOutline(AbstractObject obj) {
+//        for (RepeatedObject repeat : obj.getRepeat())
     }
 }

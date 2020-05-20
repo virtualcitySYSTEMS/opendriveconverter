@@ -1,10 +1,15 @@
 package de.vcs.utils.geometry;
 
+import de.vcs.model.odr.geometry.AbstractODRGeometry;
 import de.vcs.model.odr.geometry.ParamPolynom;
+import de.vcs.model.odr.geometry.Polynom;
 import de.vcs.model.odr.geometry.STHPosition;
 import de.vcs.model.odr.road.Road;
 import de.vcs.utils.math.ParamPolynomHelper;
+import de.vcs.utils.math.PolynomHelper;
+import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.util.AffineTransformation;
 
@@ -46,5 +51,16 @@ public class Transformation {
             point = ParamPolynomHelper.calcUVPointPerpendicularToCurve(s, t, point, normal);
         }
         return point;
+    }
+
+    public static Point sth2xyzPoint(Road road, STHPosition sth) {
+        return Transformation.sth2xyzPoint(road, sth.getS(), sth.getT(), sth.getH());
+    }
+
+    public static Point sth2xyzPoint(Road road, double s, double t, double h) {
+        Point point = st2xyPoint(road, s, t);
+        Polynom poly = (Polynom) road.getElevationProfile().getElevations().floorEntry(s).getValue();
+        double elevation = PolynomHelper.calcPolynomValue(s,poly);
+        return new GeometryFactory().createPoint(new Coordinate(point.getX(), point.getY(), elevation + h));
     }
 }
