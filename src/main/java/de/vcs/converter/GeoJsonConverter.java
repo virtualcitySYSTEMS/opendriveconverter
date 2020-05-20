@@ -24,6 +24,7 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.function.Function;
 
 public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
@@ -53,16 +54,20 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
             featureTypeBuilder.setDefaultGeometry("GEOMETRY");
             SimpleFeatureType fType = featureTypeBuilder.buildFeatureType();
             SimpleFeatureBuilder featureBuilder = new SimpleFeatureBuilder(fType);
-            GeometryFactory geomFactory = new GeometryFactory();
 
             for (Road road : odr.getRoads()) {
-//                ArrayList<Geometry> geometries = road.getGmlGeometries(); //TODO: ref line points
-                LineString lineString = geomFactory.createLineString();
-                lineString = (LineString) Transformation.crsTransform(lineString, sourceCRS, targetCRS);
-                featureBuilder.add(lineString);
-                SimpleFeature roadFeature = featureBuilder.buildFeature(String.valueOf(road.getId()));
-                roadFeature.setAttribute("Name", road.getName());
-                geojson.getFeatures().add(roadFeature);
+                ArrayList<Geometry> lines = road.getGmlGeometries();
+                lines.removeIf(g -> !(g instanceof LineString));
+                lines = Transformation.crsTransform(lines, sourceCRS, targetCRS);
+                for (Geometry line : lines) {
+                    // i++ for unique id and name ???
+                    featureBuilder.reset();
+                    featureBuilder.add(line);
+                    SimpleFeature roadFeature = featureBuilder.buildFeature(String.valueOf(road.getId()));
+                    roadFeature.setAttribute("Name", road.getName());
+                    geojson.getFeatures().add(roadFeature);
+                }
+
             }
         } catch (FactoryException | TransformException e) {
             e.printStackTrace();
@@ -94,11 +99,12 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
             GeometryFactory geomFactory = new GeometryFactory();
 
             for (Road road : odr.getRoads()) {
-                ArrayList<Geometry> geometries = road.getGmlGeometries();
-                geometries = Transformation.crsTransform(geometries, sourceCRS, targetCRS);
-                Polygon[] polygonArray = new Polygon[geometries.size()];
-                MultiPolygon polygons = geomFactory.createMultiPolygon(geometries.toArray(polygonArray));
-                featureBuilder.add(polygons);
+                ArrayList<Geometry> polygons = road.getGmlGeometries();
+                polygons.removeIf(g -> !(g instanceof Polygon));
+                polygons = Transformation.crsTransform(polygons, sourceCRS, targetCRS);
+                Polygon[] polygonArray = new Polygon[polygons.size()];
+                MultiPolygon multiPolygon = geomFactory.createMultiPolygon(polygons.toArray(polygonArray));
+                featureBuilder.add(multiPolygon);
                 SimpleFeature roadFeature = featureBuilder.buildFeature(String.valueOf(road.getId()));
                 roadFeature.setAttribute("Name", road.getName());
                 geojson.getFeatures().add(roadFeature);
@@ -138,29 +144,15 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
                 for (Map.Entry<Double, LaneSection> e : road.getLanes().getLaneSections().entrySet()) {
                     Double s = e.getKey();
                     LaneSection laneSection = e.getValue();
-                    // TODO: duplicate lines
-                    for (Map.Entry<Integer, Lane> entry : laneSection.getLeftLanes().entrySet()) {
+                    for (Map.Entry<Integer, Lane> entry : getLanes(laneSection).entrySet()) {
                         Integer laneId = entry.getKey();
                         Lane lane = entry.getValue();
-                        ArrayList<Geometry> geometries = lane.getGmlGeometries();
-                        geometries = Transformation.crsTransform(geometries, sourceCRS, targetCRS);
-                        Polygon[] polygonArray = new Polygon[geometries.size()];
-                        MultiPolygon polygons = geomFactory.createMultiPolygon(geometries.toArray(polygonArray));
-                        featureBuilder.add(polygons);
-                        SimpleFeature laneFeature = featureBuilder.buildFeature(road.getId() + "_" + laneId);
-                        laneFeature.setAttribute("RoadId", road.getId());
-                        laneFeature.setAttribute("LaneSection", s);
-                        laneFeature.setAttribute("LaneId", laneId);
-                        geojson.getFeatures().add(laneFeature);
-                    }
-                    for (Map.Entry<Integer, Lane> entry : laneSection.getRightLanes().entrySet()) {
-                        Integer laneId = entry.getKey();
-                        Lane lane = entry.getValue();
-                        ArrayList<Geometry> geometries = lane.getGmlGeometries();
-                        geometries = Transformation.crsTransform(geometries, sourceCRS, targetCRS);
-                        Polygon[] polygonArray = new Polygon[geometries.size()];
-                        MultiPolygon polygons = geomFactory.createMultiPolygon(geometries.toArray(polygonArray));
-                        featureBuilder.add(polygons);
+                        ArrayList<Geometry> polygons = lane.getGmlGeometries();
+                        polygons.removeIf(g -> !(g instanceof Polygon));
+                        polygons = Transformation.crsTransform(polygons, sourceCRS, targetCRS);
+                        Polygon[] polygonArray = new Polygon[polygons.size()];
+                        MultiPolygon multiPolygon = geomFactory.createMultiPolygon(polygons.toArray(polygonArray));
+                        featureBuilder.add(multiPolygon);
                         SimpleFeature laneFeature = featureBuilder.buildFeature(road.getId() + "_" + laneId);
                         laneFeature.setAttribute("RoadId", road.getId());
                         laneFeature.setAttribute("LaneSection", s);
@@ -173,6 +165,14 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
             e.printStackTrace();
         }
         return geojson;
+    }
+
+    // TODO move to utils?
+    public static TreeMap<Integer, Lane> getLanes(LaneSection ls) {
+        TreeMap<Integer, Lane> lanes = new TreeMap<>();
+        lanes.putAll(ls.getLeftLanes());
+        lanes.putAll(ls.getRightLanes());
+        return lanes;
     }
 
 

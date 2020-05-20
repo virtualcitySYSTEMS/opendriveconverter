@@ -8,6 +8,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.Polygon;
 
 import java.io.File;
@@ -18,7 +19,7 @@ import java.util.List;
 public class FormatConverterTest {
 
     @Test
-    public void test() {
+    public void testGeoJSON() {
 
         // prepare road with lane
         Road road = new Road();
@@ -34,6 +35,8 @@ public class FormatConverterTest {
         };
         Polygon polygon = geometryFactory.createPolygon(coordinates);
         road.getGmlGeometries().add(polygon);
+        LineString line = geometryFactory.createLineString(coordinates);
+        road.getGmlGeometries().add(line);
         Lane lane = new Lane();
         lane.setId(1);
         lane.getGmlGeometries().add(polygon);
@@ -47,10 +50,13 @@ public class FormatConverterTest {
         odr.getRoads().add(road);
 
         // output
+        File testRoadRefLine = new File("src/main/resources/testRoadRefLine.json");
         File testRoadPolygon = new File("src/main/resources/testRoadPolygon.json");
         File testLanePolygon = new File("src/main/resources/testLanePolygon.json");
 
+
         List<FormatConverter> converters = new ArrayList<>();
+        converters.add(new GeoJsonConverter(GeoJsonConverter::convertReferenceLine, testRoadRefLine));
         converters.add(new GeoJsonConverter(GeoJsonConverter::convertRoads, testRoadPolygon));
         converters.add(new GeoJsonConverter(GeoJsonConverter::convertLanes, testLanePolygon));
         converters.forEach(c -> {
@@ -62,6 +68,7 @@ public class FormatConverterTest {
         });
 
         // test file exists
+        Assert.assertTrue(testRoadRefLine.exists());
         Assert.assertTrue(testRoadPolygon.exists());
         Assert.assertTrue(testLanePolygon.exists());
     }
