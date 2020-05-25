@@ -1,8 +1,10 @@
 package de.vcs.converter;
 
 import de.vcs.model.odr.core.OpenDRIVE;
+import de.vcs.model.odr.geometry.STHPosition;
 import de.vcs.model.odr.lane.Lane;
 import de.vcs.model.odr.lane.LaneSection;
+import de.vcs.model.odr.object.GenericObject;
 import de.vcs.model.odr.road.Road;
 import org.junit.Assert;
 import org.junit.Test;
@@ -43,6 +45,12 @@ public class FormatConverterTest {
         LaneSection laneSection = new LaneSection();
         laneSection.getLeftLanes().put(1, lane);
         road.getLanes().getLaneSections().put(0.0, laneSection);
+        // add object
+        GenericObject obj = new GenericObject("vegetation", "tree", false);
+        obj.setId("tree123");
+        obj.setName("Eiche");
+        obj.getGmlGeometries().add(polygon);
+        road.getObjects().add(obj);
 
         // create odr
         OpenDRIVE odr = new OpenDRIVE();
@@ -53,12 +61,14 @@ public class FormatConverterTest {
         File testRoadRefLine = new File("src/main/resources/testRoadRefLine.json");
         File testRoadPolygon = new File("src/main/resources/testRoadPolygon.json");
         File testLanePolygon = new File("src/main/resources/testLanePolygon.json");
+        File testObjectsPolygon = new File("src/main/resources/testObjectsPolygon.json");
 
 
         List<FormatConverter> converters = new ArrayList<>();
         converters.add(new GeoJsonConverter(GeoJsonConverter::convertReferenceLine, testRoadRefLine));
         converters.add(new GeoJsonConverter(GeoJsonConverter::convertRoads, testRoadPolygon));
         converters.add(new GeoJsonConverter(GeoJsonConverter::convertLanes, testLanePolygon));
+        converters.add(new GeoJsonConverter(GeoJsonConverter::convertObjects, testObjectsPolygon));
         converters.forEach(c -> {
             try {
                 c.write(c.convertFromODR(odr));
@@ -71,5 +81,6 @@ public class FormatConverterTest {
         Assert.assertTrue(testRoadRefLine.exists());
         Assert.assertTrue(testRoadPolygon.exists());
         Assert.assertTrue(testLanePolygon.exists());
+        Assert.assertTrue(testObjectsPolygon.exists());
     }
 }

@@ -91,13 +91,18 @@ public class ObjectAreaGenerator extends AbstractAreaGenerator implements AreaGe
     }
 
     private void addRepeatedOutline(AbstractObject obj) {
-        if (obj.getRepeat().floorEntry(0.0).getValue().getDistance() == 0.0) {
+        if (obj.getRepeat().firstEntry().getValue().getDistance() == 0.0) {
             // continuous object
             ArrayList<STHPosition> inner = new ArrayList<>();
             ArrayList<STHPosition> outer = new ArrayList<>();
-            sRunner = Discretisation.generateSRunner(2.0, road.getLength());
+            double start = obj.getRepeat().firstEntry().getValue().getLinearReference().getS();
+            double end = obj.getRepeat().lastEntry().getValue().getLinearReference().getS();
+            sRunner = Discretisation.generateSRunner(2.0, end, start);
             sRunner.forEach(s -> {
                 STHRepeat repeat = obj.getRepeat().floorEntry(s).getValue();
+                System.out.println("sRunner: " + s);
+                System.out.println("s: " + repeat.getLinearReference().getS());
+                System.out.println("l: " + repeat.getLength());
                 double t = ODRMath.interpolate(repeat.getStart().getT(), repeat.getEnd().getT(), (s - repeat.getLinearReference().getS()) / repeat.getLength());
                 double width = ODRMath.interpolate(repeat.getWidthStart(), repeat.getWidthEnd(), (s - repeat.getLinearReference().getS()) / repeat.getLength());
                 double zOffset = ODRMath.interpolate(

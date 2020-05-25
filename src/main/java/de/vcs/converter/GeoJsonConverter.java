@@ -3,6 +3,8 @@ package de.vcs.converter;
 import de.vcs.model.odr.core.OpenDRIVE;
 import de.vcs.model.odr.lane.Lane;
 import de.vcs.model.odr.lane.LaneSection;
+import de.vcs.model.odr.object.AbstractObject;
+import de.vcs.model.odr.object.GenericObject;
 import de.vcs.model.odr.road.Road;
 import de.vcs.utils.geometry.Transformation;
 import org.geotools.data.DataUtilities;
@@ -173,6 +175,51 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
         lanes.putAll(ls.getLeftLanes());
         lanes.putAll(ls.getRightLanes());
         return lanes;
+    }
+
+    public static GeoJsonFormat convertObjects(OpenDRIVE odr) {
+        GeoJsonFormat geojson = new GeoJsonFormat();
+        CoordinateReferenceSystem sourceCRS;
+        CoordinateReferenceSystem targetCRS;
+        try {
+            sourceCRS = CRS.decode(odr.getHeader().getGeoReference().getEpsg());
+            targetCRS = CRS.decode("EPSG:4326");
+
+            SimpleFeatureTypeBuilder featureTypeBuilder = new SimpleFeatureTypeBuilder();
+            featureTypeBuilder.setName("FEATURE_TYPE");
+            featureTypeBuilder.setCRS(DefaultGeographicCRS.WGS84);
+            featureTypeBuilder.add("GEOMETRY", MultiPolygon.class);
+            featureTypeBuilder.add("id", String.class);
+            featureTypeBuilder.add("name", String.class);
+            featureTypeBuilder.add("type", String.class);
+            featureTypeBuilder.add("subtype", String.class);
+            featureTypeBuilder.setDefaultGeometry("GEOMETRY");
+            SimpleFeatureType fType = featureTypeBuilder.buildFeatureType();
+            SimpleFeatureBuilder featureBuilder = new SimpleFeatureBuilder(fType);
+            GeometryFactory geomFactory = new GeometryFactory();
+
+            for (Road road : odr.getRoads()) {
+                for (AbstractObject obj : road.getObjects()) {
+                    ArrayList<Geometry> polygons = obj.getGmlGeometries();
+                    polygons.removeIf(g -> !(g instanceof Polygon));
+                    polygons = Transformation.crsTransform(polygons, sourceCRS, targetCRS);
+                    Polygon[] polygonArray = new Polygon[polygons.size()];
+                    MultiPolygon multiPolygon = geomFactory.createMultiPolygon(polygons.toArray(polygonArray));
+                    featureBuilder.add(multiPolygon);
+                    SimpleFeature laneFeature = featureBuilder.buildFeature(road.getId() + "_" + obj.getId());
+                    laneFeature.setAttribute("id", obj.getId());
+                    laneFeature.setAttribute("name", obj.getName());
+                    if (obj instanceof GenericObject) {
+                        laneFeature.setAttribute("type", ((GenericObject) obj).getType());
+                        laneFeature.setAttribute("name", ((GenericObject) obj).getSubtype());
+                    }
+                    geojson.getFeatures().add(laneFeature);
+                }
+            }
+        } catch (FactoryException | TransformException e) {
+            e.printStackTrace();
+        }
+        return geojson;
     }
 
 
