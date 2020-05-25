@@ -17,4 +17,11 @@ public class ODRMath {
     public static Point vectorMulti(double length, Point p){
         return new GeometryFactory().createPoint(new Coordinate(length*p.getX(), length*p.getY()));
     }
+
+    public static double interpolate(double start, double end, double value) throws IllegalArgumentException {
+        if (value < 0.0 || value > 1.0) {
+            throw new IllegalArgumentException("value " + value + " out of range [0,1]");
+        }
+        return start + value * (end - start);
+    }
 }
