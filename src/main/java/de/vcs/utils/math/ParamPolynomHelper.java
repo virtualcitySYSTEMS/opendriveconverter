@@ -30,9 +30,9 @@ public class ParamPolynomHelper {
                 new Coordinate(uvpoint.getX() - nvpoint.getY() * distance, uvpoint.getY() + nvpoint.getY() * distance));
     }
 
-    public static Point calcUVPointPerpendicularToCurve(double ds, double distance, Point uvpoint, Point nvpoint) {
+    public static Point calcUVPointPerpendicularToCurve(Point uvpoint, Point nvpoint, double distance) {
         return new GeometryFactory().createPoint(
-                new Coordinate(uvpoint.getX() - nvpoint.getY() * distance, uvpoint.getY() + nvpoint.getY() * distance));
+                new Coordinate(uvpoint.getX() - nvpoint.getX() * distance, uvpoint.getY() + nvpoint.getY() * distance));
     }
 
     public static Point calcUVPoint(double ds, ParamPolynom p) {
@@ -46,7 +46,7 @@ public class ParamPolynomHelper {
         double tv = getFirstDerivationV(ds, p);
         double tun = ODRMath.normalizeComponent(tu, tv);
         double tvn = ODRMath.normalizeComponent(tv, tu);
-        return new GeometryFactory().createPoint(new Coordinate(point.getX() - tvn, point.getY() + tun));
+        return new GeometryFactory().createPoint(new Coordinate(- tvn, tun));
     }
 
     private static double getFirstDerivationU(double ds, ParamPolynom p) {

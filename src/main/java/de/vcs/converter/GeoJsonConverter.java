@@ -19,6 +19,7 @@ import org.locationtech.jts.geom.*;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.referencing.FactoryException;
+import org.opengis.referencing.crs.CRSAuthorityFactory;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.referencing.operation.TransformException;
 
@@ -44,9 +45,10 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
         GeoJsonFormat geojson = new GeoJsonFormat();
         CoordinateReferenceSystem sourceCRS;
         CoordinateReferenceSystem targetCRS;
+        CRSAuthorityFactory factory = CRS.getAuthorityFactory(true);
         try {
-            sourceCRS = CRS.decode(odr.getHeader().getGeoReference().getEpsg());
-            targetCRS = CRS.decode("EPSG:4326");
+            sourceCRS = factory.createCoordinateReferenceSystem(odr.getHeader().getGeoReference().getEpsg());
+            targetCRS = factory.createCoordinateReferenceSystem("EPSG:4326");
 
             SimpleFeatureTypeBuilder featureTypeBuilder = new SimpleFeatureTypeBuilder();
             featureTypeBuilder.setName("FEATURE_TYPE");
@@ -86,9 +88,10 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
         GeoJsonFormat geojson = new GeoJsonFormat();
         CoordinateReferenceSystem sourceCRS;
         CoordinateReferenceSystem targetCRS;
+        CRSAuthorityFactory factory = CRS.getAuthorityFactory(true);
         try {
-            sourceCRS = CRS.decode(odr.getHeader().getGeoReference().getEpsg());
-            targetCRS = CRS.decode("EPSG:4326");
+            sourceCRS = factory.createCoordinateReferenceSystem(odr.getHeader().getGeoReference().getEpsg());
+            targetCRS = factory.createCoordinateReferenceSystem("EPSG:4326");
 
             SimpleFeatureTypeBuilder featureTypeBuilder = new SimpleFeatureTypeBuilder();
             featureTypeBuilder.setName("FEATURE_TYPE");
@@ -126,9 +129,10 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
         GeoJsonFormat geojson = new GeoJsonFormat();
         CoordinateReferenceSystem sourceCRS;
         CoordinateReferenceSystem targetCRS;
+        CRSAuthorityFactory factory = CRS.getAuthorityFactory(true);
         try {
-            sourceCRS = CRS.decode(odr.getHeader().getGeoReference().getEpsg());
-            targetCRS = CRS.decode("EPSG:4326");
+            sourceCRS = factory.createCoordinateReferenceSystem(odr.getHeader().getGeoReference().getEpsg());
+            targetCRS = factory.createCoordinateReferenceSystem("EPSG:4326");
 
             SimpleFeatureTypeBuilder featureTypeBuilder = new SimpleFeatureTypeBuilder();
             featureTypeBuilder.setName("FEATURE_TYPE");
@@ -181,9 +185,10 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
         GeoJsonFormat geojson = new GeoJsonFormat();
         CoordinateReferenceSystem sourceCRS;
         CoordinateReferenceSystem targetCRS;
+        CRSAuthorityFactory factory = CRS.getAuthorityFactory(true);
         try {
-            sourceCRS = CRS.decode(odr.getHeader().getGeoReference().getEpsg());
-            targetCRS = CRS.decode("EPSG:4326");
+            sourceCRS = factory.createCoordinateReferenceSystem(odr.getHeader().getGeoReference().getEpsg());
+            targetCRS = factory.createCoordinateReferenceSystem("EPSG:4326");
 
             SimpleFeatureTypeBuilder featureTypeBuilder = new SimpleFeatureTypeBuilder();
             featureTypeBuilder.setName("FEATURE_TYPE");

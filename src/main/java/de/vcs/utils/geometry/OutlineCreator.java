@@ -1,10 +1,13 @@
 package de.vcs.utils.geometry;
 
+import de.vcs.datatypes.CoordinateSet;
 import de.vcs.model.odr.geometry.STHPosition;
 import de.vcs.model.odr.road.Road;
 import org.locationtech.jts.geom.*;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Set;
 
 public class OutlineCreator {
 
@@ -34,12 +37,12 @@ public class OutlineCreator {
         return geometryFactory.createPolygon(coordinates);
     }
 
-    public static Polygon createPolygonalOutline(Road road, ArrayList<STHPosition> positions) {
+    public static Polygon createPolygonalOutline(ArrayList<Coordinate> inner, ArrayList<Coordinate> outer) {
         CoordinateList coords = new CoordinateList();
-        for (STHPosition sth : positions) {
-            Point p = Transformation.st2xyPoint(road, sth);
-            coords.add(p.getCoordinate());
-        }
+        coords.addAll(outer);
+        Collections.reverse(inner); // does this change the global state of the array?
+        coords.addAll(inner);
+        coords.add(outer.get(0));
         GeometryFactory geometryFactory = new GeometryFactory();
         return geometryFactory.createPolygon(coords.toCoordinateArray());
     }

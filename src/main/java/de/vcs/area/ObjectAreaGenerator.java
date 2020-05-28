@@ -1,5 +1,6 @@
 package de.vcs.area;
 
+import de.vcs.datatypes.CoordinateSet;
 import de.vcs.model.odr.geometry.STHPosition;
 import de.vcs.model.odr.geometry.STHRepeat;
 import de.vcs.model.odr.geometry.UVZPosition;
@@ -93,16 +94,14 @@ public class ObjectAreaGenerator extends AbstractAreaGenerator implements AreaGe
     private void addRepeatedOutline(AbstractObject obj) {
         if (obj.getRepeat().firstEntry().getValue().getDistance() == 0.0) {
             // continuous object
-            ArrayList<STHPosition> inner = new ArrayList<>();
-            ArrayList<STHPosition> outer = new ArrayList<>();
+            CoordinateSet set = new CoordinateSet();
+            ArrayList<Coordinate> inner = new ArrayList<>();
+            ArrayList<Coordinate> outer = new ArrayList<>();
             double start = obj.getRepeat().firstEntry().getValue().getLinearReference().getS();
             double end = obj.getRepeat().lastEntry().getValue().getLinearReference().getS();
             sRunner = Discretisation.generateSRunner(2.0, end, start);
             sRunner.forEach(s -> {
                 STHRepeat repeat = obj.getRepeat().floorEntry(s).getValue();
-                System.out.println("sRunner: " + s);
-                System.out.println("s: " + repeat.getLinearReference().getS());
-                System.out.println("l: " + repeat.getLength());
                 double t = ODRMath.interpolate(repeat.getStart().getT(), repeat.getEnd().getT(), (s - repeat.getLinearReference().getS()) / repeat.getLength());
                 double width = ODRMath.interpolate(repeat.getWidthStart(), repeat.getWidthEnd(), (s - repeat.getLinearReference().getS()) / repeat.getLength());
                 double zOffset = ODRMath.interpolate(
@@ -110,10 +109,13 @@ public class ObjectAreaGenerator extends AbstractAreaGenerator implements AreaGe
                         repeat.getEnd().getIntertialTransform().getzOffset(),
                         (s - repeat.getLinearReference().getS()) / repeat.getLength()
                 );
-                inner.add(new STHPosition(s,t - width / 2, zOffset));
-                inner.add(new STHPosition(s,t + width / 2, zOffset));
+                CoordinateSet param = new CoordinateSet();
+                inner.add(Transformation.sth2xyzPoint(road, s,t - width / 2, zOffset).getCoordinate());
+                outer.add(Transformation.sth2xyzPoint(road, s,t + width / 2, zOffset).getCoordinate());
             });
-            obj.getGmlGeometries().add(OutlineCreator.createPolygonalOutline(road, inner));
+            set.setPoints(0, inner);
+            set.setPoints(1, outer);
+            obj.getGmlGeometries().add(OutlineCreator.createPolygonalOutline(inner, outer));
         } else {
             // discrete objects
             for (Map.Entry<Double, STHRepeat> entry : obj.getRepeat().entrySet()) {

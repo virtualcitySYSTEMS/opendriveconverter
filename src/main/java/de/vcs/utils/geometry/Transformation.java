@@ -61,18 +61,16 @@ public class Transformation {
 
     public static Point st2xyPoint(Road road, double s, double t) {
         ParamPolynom ppoly = (ParamPolynom) road.getPlanView().getOdrGeometries().floorEntry(s).getValue();
-        Point point = ParamPolynomHelper.calcUVPoint(s, ppoly);
-        point = (Point) Transformation.transform(point, ppoly.getIntertialTransform().getHdg(),
+        double ds = s - ppoly.getLinearReference().getS();
+        Point point = ParamPolynomHelper.calcUVPoint(ds, ppoly);
+        if (t != 0.0) {
+            Point normal = ParamPolynomHelper.calcNormalVector(ds, point, ppoly);
+            point = ParamPolynomHelper.calcUVPointPerpendicularToCurve(point, normal, t);
+        }
+        Point xyz = (Point) Transformation.transform(point, ppoly.getIntertialTransform().getHdg(),
                 ppoly.getInertialReference().getPos().getValue().get(0),
                 ppoly.getInertialReference().getPos().getValue().get(1));
-        if (t != 0.0) {
-            Point normal = ParamPolynomHelper.calcNormalVector(s, point, ppoly);
-            normal = (Point) Transformation.transform(normal, ppoly.getIntertialTransform().getHdg(),
-                    ppoly.getInertialReference().getPos().getValue().get(0),
-                    ppoly.getInertialReference().getPos().getValue().get(1));
-            point = ParamPolynomHelper.calcUVPointPerpendicularToCurve(s, t, point, normal);
-        }
-        return point;
+        return xyz;
     }
 
     public static Point sth2xyzPoint(Road road, STHPosition sth) {
