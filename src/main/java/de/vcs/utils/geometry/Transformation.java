@@ -2,7 +2,6 @@ package de.vcs.utils.geometry;
 
 import org.geotools.geometry.jts.JTS;
 import org.geotools.referencing.CRS;
-import de.vcs.model.odr.geometry.AbstractODRGeometry;
 import de.vcs.model.odr.geometry.ParamPolynom;
 import de.vcs.model.odr.geometry.Polynom;
 import de.vcs.model.odr.geometry.STHPosition;

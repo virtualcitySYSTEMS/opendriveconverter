@@ -1,9 +1,7 @@
 package de.vcs.area;
 
-import de.vcs.adapter.geometry.PolynomAdapter;
 import de.vcs.datatypes.LaneParameter;
-import de.vcs.datatypes.LaneSectionParameter;
-import de.vcs.model.odr.geometry.Line;
+import de.vcs.datatypes.LaneSectionParameters;
 import de.vcs.model.odr.geometry.ParamPolynom;
 import de.vcs.model.odr.geometry.Polynom;
 import de.vcs.model.odr.lane.Lane;
@@ -13,18 +11,15 @@ import de.vcs.utils.geometry.Discretisation;
 import de.vcs.utils.geometry.Transformation;
 import de.vcs.utils.math.ParamPolynomHelper;
 import de.vcs.utils.math.PolynomHelper;
-import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
-import org.xmlobjects.gml.model.geometry.primitives.LineString;
 
 import java.util.ArrayList;
-import java.util.Map;
 import java.util.TreeMap;
 
 public class RoadAreaGenerator extends AbstractAreaGenerator implements AreaGenerator {
 
     Road road;
-    ArrayList<LaneSectionParameter> laneSectionParameters;
+    ArrayList<LaneSectionParameters> laneSectionParameters;
     ArrayList<Double> sRunner;
 
     public RoadAreaGenerator(Road road) {
@@ -54,7 +49,7 @@ public class RoadAreaGenerator extends AbstractAreaGenerator implements AreaGene
 
     private void applySRunner() {
         sRunner.forEach(s -> {
-            LaneSectionParameter lsp = new LaneSectionParameter();
+            LaneSectionParameters lsp = new LaneSectionParameters();
             //global
             ParamPolynom ppoly = (ParamPolynom) road.getPlanView().getOdrGeometries().floorEntry(s).getValue();
             Point uvpoint = ParamPolynomHelper.calcUVPoint(s, ppoly);
