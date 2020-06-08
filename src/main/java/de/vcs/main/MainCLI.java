@@ -1,5 +1,6 @@
 package de.vcs.main;
 
+import de.vcs.area.ObjectAreaGenerator;
 import de.vcs.area.RoadAreaGenerator;
 import de.vcs.area.worker.AreaWorkerFactory;
 import de.vcs.area.worker.AreaWorkerPool;
@@ -41,7 +42,7 @@ public class MainCLI {
 
     public static void main(String[] args) {
         try {
-            MainCLI mainCLI = new MainCLI("src/main/resources/realRoadExample.xodr", "src/main/resources/realRoadExample.json");
+            MainCLI mainCLI = new MainCLI("src/main/resources/2019-11-29_SAVe_Ingolstadt_Prio1-4.xodr", "src/main/resources/2019-11-29_SAVe_Ingolstadt_Prio1-4.json");
             mainCLI.doMain();
         } catch (Exception e) {
             e.printStackTrace();
@@ -57,6 +58,7 @@ public class MainCLI {
         writeODRFile(odr);
         printGML();
     }
+
     private void initializeODRFactory() throws XMLObjectsException, XMLReadException {
         xmlObjects = XMLObjects.newInstance();
         xmlReaderFactory = XMLReaderFactory.newInstance(xmlObjects);
@@ -77,8 +79,8 @@ public class MainCLI {
 
     private void writeODRFile(OpenDRIVE odr) {
         List<FormatConverter> converters = new ArrayList<>();
-        converters.add(new GeoJsonConverter(GeoJsonConverter::convertRoads, outputFile));
-//        converters.add(new GeoJsonConverter(GeoJsonConverter::convertLanes));
+//        converters.add(new GeoJsonConverter(GeoJsonConverter::convertRoads, outputFile));
+        converters.add(new GeoJsonConverter(GeoJsonConverter::convertReferenceLine, outputFile));
         // TODO: converters.add(new CityGMLConverter(CityGMLConverter::convertRoads));
         converters.forEach(c -> {
             try {
@@ -91,7 +93,10 @@ public class MainCLI {
 
     private void buildAreaParallel() {
         areaWorkerPool.prestartCoreWorkers();
-        odr.getRoads().forEach(o -> areaWorkerPool.addWork(new RoadAreaGenerator(o)));
+        odr.getRoads().forEach(o -> {
+            areaWorkerPool.addWork(new RoadAreaGenerator(o));
+//            areaWorkerPool.addWork(new ObjectAreaGenerator(o));
+        });
         try {
             areaWorkerPool.shutdownAndWait();
         } catch (InterruptedException e) {

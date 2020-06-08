@@ -8,14 +8,14 @@ public class Discretisation {
         return generateSRunner(step, roadLength, 0.0);
     }
 
-    public static ArrayList<Double> generateSRunner(double step, double roadLength, double start) {
+    public static ArrayList<Double> generateSRunner(double step, double length, double start) {
         ArrayList<Double> sRunners = new ArrayList<>();
         double currentS = start;
-        while (currentS < roadLength) {
+        while (currentS < length) {
             sRunners.add(currentS);
             currentS += step;
         }
-        sRunners.add(roadLength);
+        sRunners.add(length);
         return sRunners;
     }
 }

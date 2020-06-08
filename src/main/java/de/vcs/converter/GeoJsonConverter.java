@@ -38,6 +38,7 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
 
     /**
      * Creates a top level feature for each OpenDRIVE Road Object represented by its reference line
+     *
      * @param odr - OpenDRIVE data
      * @return GeoJSON feature list of reference line LineStrings
      */
@@ -47,7 +48,7 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
         CoordinateReferenceSystem targetCRS;
         CRSAuthorityFactory factory = CRS.getAuthorityFactory(true);
         try {
-            sourceCRS = factory.createCoordinateReferenceSystem(odr.getHeader().getGeoReference().getEpsg());
+            sourceCRS = factory.createCoordinateReferenceSystem("EPSG:25832");
             targetCRS = factory.createCoordinateReferenceSystem("EPSG:4326");
 
             SimpleFeatureTypeBuilder featureTypeBuilder = new SimpleFeatureTypeBuilder();
@@ -60,20 +61,29 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
             SimpleFeatureBuilder featureBuilder = new SimpleFeatureBuilder(fType);
 
             for (Road road : odr.getRoads()) {
-                ArrayList<Geometry> lines = road.getGmlGeometries();
-                lines.removeIf(g -> !(g instanceof LineString));
-                lines = Transformation.crsTransform(lines, sourceCRS, targetCRS);
-                for (Geometry line : lines) {
-                    // i++ for unique id and name ???
-                    featureBuilder.reset();
-                    featureBuilder.add(line);
-                    SimpleFeature roadFeature = featureBuilder.buildFeature(String.valueOf(road.getId()));
-                    roadFeature.setAttribute("Name", road.getName());
-                    geojson.getFeatures().add(roadFeature);
-                }
+                road.getLanes().getLaneSections().values().forEach(ls -> {
+                    ArrayList<Geometry> lines = ls.getCenterLane().getGmlGeometries();
+                    lines.removeIf(g -> !(g instanceof LineString));
+                    try {
+                        lines = Transformation.crsTransform(lines, sourceCRS, targetCRS);
+                    } catch (FactoryException e) {
+                        e.printStackTrace();
+                    } catch (TransformException e) {
+                        e.printStackTrace();
+                    }
+                    for (Geometry line : lines) {
+                        // i++ for unique id and name ???
+                        featureBuilder.reset();
+                        featureBuilder.add(line);
+                        SimpleFeature roadFeature = featureBuilder.buildFeature(String.valueOf(road.getId()));
+                        roadFeature.setAttribute("Name", road.getName());
+                        geojson.getFeatures().add(roadFeature);
+                    }
+                });
+
 
             }
-        } catch (FactoryException | TransformException e) {
+        } catch (FactoryException e) {
             e.printStackTrace();
         }
         return geojson;
@@ -81,6 +91,7 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
 
     /**
      * Creates a top level feature for each OpenDRIVE Road Object represented by its area
+     *
      * @param odr - OpenDRIVE data
      * @return GeoJSON feature list of road polygons
      */
@@ -122,6 +133,7 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
 
     /**
      * Creates a top level feature for each OpenDRIVE Lane Object represented by its area
+     *
      * @param odr - OpenDRIVE data
      * @return GeoJSON feature list of lane polygons
      */
@@ -131,7 +143,7 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
         CoordinateReferenceSystem targetCRS;
         CRSAuthorityFactory factory = CRS.getAuthorityFactory(true);
         try {
-            sourceCRS = factory.createCoordinateReferenceSystem(odr.getHeader().getGeoReference().getEpsg());
+            sourceCRS = factory.createCoordinateReferenceSystem("EPSG:25832");
             targetCRS = factory.createCoordinateReferenceSystem("EPSG:4326");
 
             SimpleFeatureTypeBuilder featureTypeBuilder = new SimpleFeatureTypeBuilder();

@@ -1,6 +1,5 @@
 package de.vcs.area;
 
-import de.vcs.datatypes.CoordinateSet;
 import de.vcs.model.odr.geometry.STHPosition;
 import de.vcs.model.odr.geometry.STHRepeat;
 import de.vcs.model.odr.geometry.UVZPosition;
@@ -31,7 +30,7 @@ public class ObjectAreaGenerator extends AbstractAreaGenerator implements AreaGe
     }
 
     private void apply2D() {
-        for(AbstractObject obj : road.getObjects()) {
+        for (AbstractObject obj : road.getObjects()) {
             if (obj.getOutlines().size() > 0) {
                 addComplexOutline(obj);
             } else if (obj.getRepeat().size() > 0) {
@@ -45,6 +44,7 @@ public class ObjectAreaGenerator extends AbstractAreaGenerator implements AreaGe
 
     /**
      * adds the objects position as a point geometry
+     *
      * @param obj - OpenDRIVE object
      * @return point geometry
      */
@@ -56,7 +56,8 @@ public class ObjectAreaGenerator extends AbstractAreaGenerator implements AreaGe
 
     /**
      * adds a simple 2D (!) outline created from radius or length and width
-     * @param obj - OpenDRIVE object
+     *
+     * @param obj   - OpenDRIVE object
      * @param point - objects position as a point geometry
      */
     private void addSimpleOutline(AbstractObject obj, Point point) {
@@ -69,10 +70,11 @@ public class ObjectAreaGenerator extends AbstractAreaGenerator implements AreaGe
 
     /**
      * adds a complex 2D (!) outline created from cornerRoad or cornerLocal
+     *
      * @param obj - OpenDRIVE object
      */
     private void addComplexOutline(AbstractObject obj) {
-        for(Outline outline : obj.getOutlines()) {
+        for (Outline outline : obj.getOutlines()) {
             CoordinateList coordinates = new CoordinateList();
             if (outline.getCornerRoad() != null) {
                 for (STHPosition position : outline.getCornerRoad()) {
@@ -94,7 +96,7 @@ public class ObjectAreaGenerator extends AbstractAreaGenerator implements AreaGe
     private void addRepeatedOutline(AbstractObject obj) {
         if (obj.getRepeat().firstEntry().getValue().getDistance() == 0.0) {
             // continuous object
-            CoordinateSet set = new CoordinateSet();
+
             ArrayList<Coordinate> inner = new ArrayList<>();
             ArrayList<Coordinate> outer = new ArrayList<>();
             double start = obj.getRepeat().firstEntry().getValue().getLinearReference().getS();
@@ -109,12 +111,9 @@ public class ObjectAreaGenerator extends AbstractAreaGenerator implements AreaGe
                         repeat.getEnd().getIntertialTransform().getzOffset(),
                         (s - repeat.getLinearReference().getS()) / repeat.getLength()
                 );
-                CoordinateSet param = new CoordinateSet();
-                inner.add(Transformation.sth2xyzPoint(road, s,t - width / 2, zOffset).getCoordinate());
-                outer.add(Transformation.sth2xyzPoint(road, s,t + width / 2, zOffset).getCoordinate());
+                inner.add(Transformation.sth2xyzPoint(road, s, t - width / 2, zOffset).getCoordinate());
+                outer.add(Transformation.sth2xyzPoint(road, s, t + width / 2, zOffset).getCoordinate());
             });
-            set.setPoints(0, inner);
-            set.setPoints(1, outer);
             obj.getGmlGeometries().add(OutlineCreator.createPolygonalOutline(inner, outer));
         } else {
             // discrete objects

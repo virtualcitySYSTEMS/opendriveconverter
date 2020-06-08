@@ -1,5 +1,7 @@
 package de.vcs.area;
 
+import de.vcs.area.odrgeometryfactory.ODRGeometryFactory;
+import de.vcs.constants.JTSConstants;
 import de.vcs.datatypes.LaneParameter;
 import de.vcs.datatypes.LaneSectionParameters;
 import de.vcs.model.odr.geometry.ParamPolynom;
@@ -24,7 +26,6 @@ public class RoadAreaGenerator extends AbstractAreaGenerator implements AreaGene
 
     public RoadAreaGenerator(Road road) {
         this.road = road;
-        init();
     }
 
     @Override
@@ -32,73 +33,52 @@ public class RoadAreaGenerator extends AbstractAreaGenerator implements AreaGene
         applySRunner();
     }
 
-    private void apply(){
-        sRunner.forEach(s->{
-            // Reference line points
-            ParamPolynom ppoly = (ParamPolynom) road.getPlanView().getOdrGeometries().floorEntry(s).getValue();
-            Point uvpoint = ParamPolynomHelper.calcUVPoint(s, ppoly);
-            uvpoint = (Point) Transformation.transform(uvpoint, ppoly.getIntertialTransform().getHdg(),
-                    ppoly.getInertialReference().getPos().getValue().get(0),
-                    ppoly.getInertialReference().getPos().getValue().get(1));
-            Point nvpoint = ParamPolynomHelper.calcNormalVector(s, uvpoint, ppoly);
-            nvpoint = (Point) Transformation.transform(nvpoint, ppoly.getIntertialTransform().getHdg(),
-                    ppoly.getInertialReference().getPos().getValue().get(0),
-                    ppoly.getInertialReference().getPos().getValue().get(1));
-        });
-    }
-
     private void applySRunner() {
-        sRunner.forEach(s -> {
-            LaneSectionParameters lsp = new LaneSectionParameters();
-            //global
-            ParamPolynom ppoly = (ParamPolynom) road.getPlanView().getOdrGeometries().floorEntry(s).getValue();
-            Point uvpoint = ParamPolynomHelper.calcUVPoint(s, ppoly);
-            uvpoint = (Point) Transformation.transform(uvpoint, ppoly.getIntertialTransform().getHdg(),
-                    ppoly.getInertialReference().getPos().getValue().get(0),
-                    ppoly.getInertialReference().getPos().getValue().get(1));
-            Point nvpoint = ParamPolynomHelper.calcNormalVector(s, uvpoint, ppoly);
-            nvpoint = (Point) Transformation.transform(nvpoint, ppoly.getIntertialTransform().getHdg(),
-                    ppoly.getInertialReference().getPos().getValue().get(0),
-                    ppoly.getInertialReference().getPos().getValue().get(1));
-            Point offsetPoint = calcLaneOffsetPoints(s, uvpoint, nvpoint);
-            LaneSection ls = road.getLanes().getLaneSections().floorEntry(s).getValue();
-            lsp.setLaneParameters(calcLaneWidths(s, uvpoint, nvpoint, ls));
-            lsp.setRefLinePoint(uvpoint);
-            lsp.setAbsolutS(s);
-            lsp.setLaneOffsetPoint(offsetPoint);
+        road.getLanes().getLaneSections().keySet().forEach(key -> {
+
+            double sStart = key;
+            double sEnd;
+            if (road.getLanes().getLaneSections().size() <= 1) {
+                sEnd = road.getLength();
+            } else {
+                try {
+                    sEnd = road.getLanes().getLaneSections().ceilingKey(key + 0.01);
+                } catch (Exception e) {
+                    sEnd = sStart;
+                }
+            }
+            System.out.println(key + " Start:" + sStart + " End: " + sEnd);
+            if (sStart != sEnd) {
+                LaneSection ls = road.getLanes().getLaneSections().get(key);
+                LaneSectionParameters lsp = new LaneSectionParameters();
+                ArrayList<Double> sPositions = Discretisation.generateSRunner(2.0, sEnd - sStart);
+                sPositions.forEach(s -> {
+                    lsp.getCenterLine().add(fillCenterLine(sStart + s, ls, road));
+                });
+                ls.getCenterLane().getGmlGeometries().add(ODRGeometryFactory.create(JTSConstants.LINESTRING, lsp.getCenterLine()));
+
+            }
+
         });
     }
 
-    //TODO not needed?
-    private TreeMap<Integer, LaneParameter> calcLaneWidths(double ds, Point uvpoint, Point nvpoint, LaneSection ls) {
-        TreeMap<Integer, LaneParameter> map = new TreeMap<>();
-        ls.getLeftLanes().forEach(ll -> {
-            Polynom poly = ll.getWidths().floorEntry(ds - ls.getLinearReference().getS()).getValue();
-            double width = PolynomHelper
-                    .calcPolynomValue(ds - ls.getLinearReference().getS() - poly.getStTransform().getsOffset(), poly);
-            LaneParameter lp = new LaneParameter();
-            lp.setWidth(width);
-            map.put(ll.getId(), lp);
-        });
-        return map;
+    /**
+     * Return centerline point for given s-position. Includes lane offset.
+     *
+     * @param s    global s-position of road
+     * @param ls   LaneSection
+     * @param road Road
+     * @return The Point of center line at givern s-position
+     */
+    private Point fillCenterLine(Double s, LaneSection ls, Road road) {
+        double offset;
+        if (road.getLanes().getLaneOffsets().isEmpty()) {
+            offset = 0.0;
+        } else {
+            double localS = road.getLanes().getLaneOffsets().floorEntry(s).getKey();
+            offset = PolynomHelper.calcPolynomValue(s - localS, road.getLanes().getLaneOffsets().floorEntry(s).getValue());
+        }
+        return Transformation.st2xyPoint(road, s, offset);
     }
 
-    private double calcLaneWidth(double s, Lane lane, LaneSection laneSection){
-        double ds = s - laneSection.getLinearReference().getS();
-        Polynom poly = lane.getWidths().floorEntry(ds).getValue();
-        double swidth = ds - poly.getStTransform().getsOffset();
-        return PolynomHelper.calcPolynomValue(swidth, poly);
-    }
-
-    private Point calcLaneOffsetPoints(double ds, Point uvpoint, Point nvpoint) {
-        Polynom poly = road.getLanes().getLaneOffsets().floorEntry(ds).getValue();
-        double width = PolynomHelper.calcPolynomValue(ds, poly);
-        Point p = ParamPolynomHelper.calcUVPointPerpendicularToCurve(ds, width, uvpoint, nvpoint);
-        return p;
-    }
-
-    private void init() {
-        laneSectionParameters = new ArrayList<>();
-        sRunner = Discretisation.generateSRunner(2.0, road.getLength());
-    }
 }

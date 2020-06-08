@@ -10,7 +10,7 @@ public interface ODRGeometry {
 
     public Geometry create(ArrayList<Point> points);
 
-    default Coordinate[] points2Coordinates(ArrayList<Point> points){
-        return (Coordinate[]) points.stream().map(Point::getCoordinate).toArray();
+    default Coordinate[] points2Coordinates(ArrayList<Point> points) {
+        return points.stream().map(Point::getCoordinate).toArray(size -> new Coordinate[size]);
     }
 }

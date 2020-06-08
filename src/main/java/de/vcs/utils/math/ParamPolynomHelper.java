@@ -16,7 +16,7 @@ public class ParamPolynomHelper {
         return p.getaV() + p.getbV() * ds + p.getcV() * Math.pow(ds, 2) + p.getdV() * Math.pow(ds, 3);
     }
 
-    //to-do not needed?
+    //TODO not needed?
     public static PolynomValue calcPolynomValues(double ds, ParamPolynom p) {
         return new PolynomValue(
                 (p.getaU() + p.getbU() * ds + p.getcU() * Math.pow(ds, 2) + p.getdU() * Math.pow(ds, 3)),

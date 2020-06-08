@@ -1,6 +1,5 @@
 package de.vcs.utils.geometry;
 
-import de.vcs.datatypes.CoordinateSet;
 import de.vcs.model.odr.geometry.STHPosition;
 import de.vcs.model.odr.road.Road;
 import org.locationtech.jts.geom.*;
