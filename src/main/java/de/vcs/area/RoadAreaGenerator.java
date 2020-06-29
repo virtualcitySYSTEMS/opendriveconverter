@@ -47,7 +47,6 @@ public class RoadAreaGenerator extends AbstractAreaGenerator implements AreaGene
                     sEnd = sStart;
                 }
             }
-            System.out.println(key + " Start:" + sStart + " End: " + sEnd);
             if (sStart != sEnd) {
                 LaneSection ls = road.getLanes().getLaneSections().get(key);
                 LaneSectionParameters lsp = new LaneSectionParameters();
