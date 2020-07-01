@@ -1,9 +1,11 @@
 package de.vcs.area;
 
+import de.vcs.area.odrgeometryfactory.ODRGeometry;
 import de.vcs.area.odrgeometryfactory.ODRGeometryFactory;
 import de.vcs.constants.JTSConstants;
 import de.vcs.datatypes.LaneParameter;
 import de.vcs.datatypes.LaneSectionParameters;
+import de.vcs.model.odr.geometry.AbstractODRGeometry;
 import de.vcs.model.odr.geometry.ParamPolynom;
 import de.vcs.model.odr.geometry.Polynom;
 import de.vcs.model.odr.lane.Lane;
@@ -13,6 +15,7 @@ import de.vcs.utils.geometry.Discretisation;
 import de.vcs.utils.geometry.Transformation;
 import de.vcs.utils.math.ParamPolynomHelper;
 import de.vcs.utils.math.PolynomHelper;
+import de.vcs.utils.transformation.PointFactory;
 import org.locationtech.jts.geom.Point;
 
 import java.util.ArrayList;
@@ -23,9 +26,11 @@ public class RoadAreaGenerator extends AbstractAreaGenerator implements AreaGene
     Road road;
     ArrayList<LaneSectionParameters> laneSectionParameters;
     ArrayList<Double> sRunner;
+    PointFactory pointFactory;
 
     public RoadAreaGenerator(Road road) {
         this.road = road;
+        pointFactory = new PointFactory();
     }
 
     @Override
@@ -35,7 +40,6 @@ public class RoadAreaGenerator extends AbstractAreaGenerator implements AreaGene
 
     private void applySRunner() {
         road.getLanes().getLaneSections().keySet().forEach(key -> {
-
             double sStart = key;
             double sEnd;
             if (road.getLanes().getLaneSections().size() <= 1) {
@@ -54,10 +58,9 @@ public class RoadAreaGenerator extends AbstractAreaGenerator implements AreaGene
                 sPositions.forEach(s -> {
                     lsp.getCenterLine().add(fillCenterLine(sStart + s, ls, road));
                 });
-                ls.getCenterLane().getGmlGeometries().add(ODRGeometryFactory.create(JTSConstants.LINESTRING, lsp.getCenterLine()));
-
+                ls.getCenterLane().getGmlGeometries()
+                        .add(ODRGeometryFactory.create(JTSConstants.LINESTRING, lsp.getCenterLine()));
             }
-
         });
     }
 
@@ -75,9 +78,22 @@ public class RoadAreaGenerator extends AbstractAreaGenerator implements AreaGene
             offset = 0.0;
         } else {
             double localS = road.getLanes().getLaneOffsets().floorEntry(s).getKey();
-            offset = PolynomHelper.calcPolynomValue(s - localS, road.getLanes().getLaneOffsets().floorEntry(s).getValue());
+            offset = PolynomHelper
+                    .calcPolynomValue(s - localS, road.getLanes().getLaneOffsets().floorEntry(s).getValue());
         }
         return Transformation.st2xyPoint(road, s, offset);
     }
 
+    private Point fillCenterLine(Double s, LaneSection ls) {
+        AbstractODRGeometry geom = road.getPlanView().getOdrGeometries().floorEntry(s).getValue();
+        double offset;
+        if (road.getLanes().getLaneOffsets().isEmpty()) {
+            offset = 0.0;
+        } else {
+            double localS = road.getLanes().getLaneOffsets().floorEntry(s).getKey();
+            offset = PolynomHelper
+                    .calcPolynomValue(s - localS, road.getLanes().getLaneOffsets().floorEntry(s).getValue());
+        }
+        return pointFactory.getODRGeometryHandler(geom.getClass()).sth2xyzPoint(geom, s, offset);
+    }
 }

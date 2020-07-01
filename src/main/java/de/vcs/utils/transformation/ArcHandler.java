@@ -1,5 +1,12 @@
 package de.vcs.utils.transformation;
 
-public class ArcHandler {
+import de.vcs.model.odr.geometry.AbstractODRGeometry;
+import org.locationtech.jts.geom.Point;
 
+public class ArcHandler implements ODRGeometryHandler {
+
+    @Override
+    public Point sth2xyzPoint(AbstractODRGeometry geom, double s, double t) {
+        return null;
+    }
 }

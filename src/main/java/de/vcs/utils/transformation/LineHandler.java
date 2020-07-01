@@ -9,6 +9,8 @@ public class LineHandler implements ODRGeometryHandler {
     @Override
     public Point sth2xyzPoint(AbstractODRGeometry geom, double s, double t) {
         if (geom.getClass().equals(Line.class)) {
+            Line line = (Line) geom;
+            double ds = s - line.getLinearReference().getS();
         } else {
         }
         return null;
