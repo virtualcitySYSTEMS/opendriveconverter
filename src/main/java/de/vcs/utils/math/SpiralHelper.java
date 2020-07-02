@@ -123,7 +123,7 @@ public final class SpiralHelper {
     /**
      * Compute a polynomial in x.
      *
-     * @param x
+     * @param x value
      * @param coef coefficients
      * @return polynomial in x
      */
@@ -137,8 +137,8 @@ public final class SpiralHelper {
 
     /**
      * Compute a polynomial in x.
-     * @param x    double; x
-     * @param coef double[]; coefficients
+     * @param x value
+     * @param coef coefficients
      * @return polynomial in x
      */
     private static double p1evl(final double x, final double[] coef) {
@@ -188,9 +188,9 @@ public final class SpiralHelper {
 
     /**
      * Approximate one point of the "standard" spiral (curvature at start is 0).
-     * @param s                run-length along spiral
-     * @param cDot             first derivative of curvature [1/m2]
-     * @param initialCurvature double; curvature at start
+     * @param s run-length along spiral
+     * @param cDot first derivative of curvature [1/m2]
+     * @param initialCurvature curvature at start
      * @return array of three double values containing x, y, and tangent direction
      */
     private static double[] odrSpiral(final double s, final double cDot, final double initialCurvature) {
@@ -204,7 +204,7 @@ public final class SpiralHelper {
      * @param spiral ODR geometry
      * @param ds local s on geometry
      * @param t offset perpendicular to curve
-     * @return
+     * @return uv point
      */
     public static Point calcUVPoint(Spiral spiral, double ds, double t) {
         double[] xyt = odrSpiral(ds,(spiral.getCurvEnd() - spiral.getCurvStart()) / spiral.getLength(), spiral.getCurvStart());

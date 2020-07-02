@@ -11,12 +11,12 @@ public class ArcHelper {
      * @param arc ODR geometry
      * @param ds local s on geometry
      * @param t offset perpendicular to curve
-     * @return
+     * @return uv point
      */
     public static Point calcUVPoint(Arc arc, double ds, double t) {
-        double r_sign = 1 / arc.getCurvature();
-        double r = Math.abs(r_sign) + t;
-        double theta = ds * (1 / r) + Math.PI / 2;
-        return new GeometryFactory().createPoint(new Coordinate(- r * Math.cos(theta), r * Math.sin(theta) + r + r_sign));
+        double sign = Math.signum(arc.getCurvature());
+        double r = Math.abs(1 / arc.getCurvature());
+        double theta = ds * (1 / r) + sign * Math.PI / 2;
+        return new GeometryFactory().createPoint(new Coordinate(- sign * (r + t) * Math.cos(theta), (r + t) * Math.sin(theta) - sign * r));
     }
 }
