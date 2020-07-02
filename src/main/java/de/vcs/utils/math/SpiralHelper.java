@@ -208,10 +208,16 @@ public final class SpiralHelper {
      */
     public static Point calcUVPoint(Spiral spiral, double ds, double t) {
         double[] xyt = odrSpiral(ds,(spiral.getCurvEnd() - spiral.getCurvStart()) / spiral.getLength(), spiral.getCurvStart());
-        Point nvpoint = calcNormalVector(xyt[2]);
         Point uvpoint = new GeometryFactory().createPoint(new Coordinate(xyt[0], xyt[1]));
+        double offsetX = 0.0;
+        double offsetY = 0.0;
+        if (t != 0.0) {
+            Point nvpoint = calcNormalVector(xyt[2]);
+            offsetX = nvpoint.getY() * t;
+            offsetY = nvpoint.getY() * t;
+        }
         return new GeometryFactory().createPoint(
-                new Coordinate(uvpoint.getX() - nvpoint.getY() * t, uvpoint.getY() + nvpoint.getY() * t));
+                new Coordinate(uvpoint.getX() - offsetX, uvpoint.getY() + offsetY));
     }
 
     /**

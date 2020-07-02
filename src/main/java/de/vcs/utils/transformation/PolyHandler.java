@@ -13,17 +13,12 @@ public class PolyHandler implements ODRGeometryHandler {
         if (geom.getClass().equals(Polynom.class)) {
             Polynom poly = (Polynom) geom;
             double ds = s - poly.getLinearReference().getS();
-            Point point = PolynomHelper.calcUVPoint(ds, poly);
-            if (t != 0.0) {
-                Point normal = PolynomHelper.calcNormalVector(ds, point, poly);
-                point = PolynomHelper.calcUVPointPerpendicularToCurve(point, normal, t);
-            }
+            Point point = PolynomHelper.calcUVPoint(poly, ds, t);
             Point xyz = (Point) Transformation.transform(point, poly.getIntertialTransform().getHdg(),
                     poly.getInertialReference().getPos().getValue().get(0),
                     poly.getInertialReference().getPos().getValue().get(1));
             return xyz;
-        } else {
-            return null;
         }
+        return null;
     }
 }

@@ -1,6 +1,5 @@
 package de.vcs.utils.math;
 
-import de.vcs.datatypes.PolynomValue;
 import de.vcs.model.odr.geometry.ParamPolynom;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
@@ -8,52 +7,77 @@ import org.locationtech.jts.geom.Point;
 
 public class ParamPolynomHelper {
 
-    public static double calcParamPolynomValueU(double ds, ParamPolynom p) {
-        return p.getaU() + p.getbU() * ds + p.getcU() * Math.pow(ds, 2) + p.getdU() * Math.pow(ds, 3);
-    }
-
-    public static double calcParamPolynomValueV(double ds, ParamPolynom p) {
-        return p.getaV() + p.getbV() * ds + p.getcV() * Math.pow(ds, 2) + p.getdV() * Math.pow(ds, 3);
-    }
-
-    //TODO not needed?
-    public static PolynomValue calcPolynomValues(double ds, ParamPolynom p) {
-        return new PolynomValue(
-                (p.getaU() + p.getbU() * ds + p.getcU() * Math.pow(ds, 2) + p.getdU() * Math.pow(ds, 3)),
-                (p.getaV() + p.getbV() * ds + p.getcV() * Math.pow(ds, 2) + p.getdV() * Math.pow(ds, 3)));
-    }
-
-    public static Point calcUVPointPerpendicularToCurve(double ds, double distance, ParamPolynom p) {
-        Point uvpoint = calcUVPoint(ds, p);
-        Point nvpoint = calcNormalVector(ds, uvpoint, p);
+    /**
+     *
+     * @param p ODR geometry
+     * @param ds local s on geometry
+     * @param t offset perpendicular to curve
+     * @return uv point
+     */
+    public static Point calcUVPoint(ParamPolynom p, double ds, double t) {
+        double u = calcParamPolynomValueU(p, ds);
+        double v = calcParamPolynomValueV(p, ds);
+        Point uvpoint = new GeometryFactory().createPoint(new Coordinate(u, v));
+        double offsetX = 0.0;
+        double offsetY = 0.0;
+        if (t != 0.0) {
+            Point nvpoint = calcNormalVector(p, ds);
+            offsetX = nvpoint.getX() * t;
+            offsetY = nvpoint.getY() * t;
+        }
         return new GeometryFactory().createPoint(
-                new Coordinate(uvpoint.getX() - nvpoint.getY() * distance, uvpoint.getY() + nvpoint.getY() * distance));
+                new Coordinate(uvpoint.getX() - offsetX, uvpoint.getY() + offsetY));
     }
 
-    public static Point calcUVPointPerpendicularToCurve(Point uvpoint, Point nvpoint, double distance) {
-        return new GeometryFactory().createPoint(
-                new Coordinate(uvpoint.getX() - nvpoint.getX() * distance, uvpoint.getY() + nvpoint.getY() * distance));
-    }
-
-    public static Point calcUVPoint(double ds, ParamPolynom p) {
-        double u = calcParamPolynomValueU(ds, p);
-        double v = calcParamPolynomValueV(ds, p);
-        return new GeometryFactory().createPoint(new Coordinate(u, v));
-    }
-
-    public static Point calcNormalVector(double ds, Point point, ParamPolynom p) {
-        double tu = getFirstDerivationU(ds, p);
-        double tv = getFirstDerivationV(ds, p);
+    /**
+     * normal vector at position s
+     * @param p ODR param poly geometry
+     * @param ds position along geometry
+     * @return normal vector
+     */
+    public static Point calcNormalVector(ParamPolynom p, double ds) {
+        double tu = getFirstDerivationU(p, ds);
+        double tv = getFirstDerivationV(p, ds);
         double tun = ODRMath.normalizeComponent(tu, tv);
         double tvn = ODRMath.normalizeComponent(tv, tu);
         return new GeometryFactory().createPoint(new Coordinate(- tvn, tun));
     }
 
-    private static double getFirstDerivationU(double ds, ParamPolynom p) {
+    /**
+     * @param p ODR param poly geometry
+     * @param ds position along geometry
+     * @return polynom value u at ds
+     */
+    public static double calcParamPolynomValueU(ParamPolynom p, double ds) {
+        return p.getaU() + p.getbU() * ds + p.getcU() * Math.pow(ds, 2) + p.getdU() * Math.pow(ds, 3);
+    }
+
+    /**
+     * @param p ODR param poly geometry
+     * @param ds position along geometry
+     * @return polynom value v at ds
+     */
+    public static double calcParamPolynomValueV(ParamPolynom p, double ds) {
+        return p.getaV() + p.getbV() * ds + p.getcV() * Math.pow(ds, 2) + p.getdV() * Math.pow(ds, 3);
+    }
+
+    /**
+     * first derivation
+     * @param p ODR param poly geometry
+     * @param ds position along geometry
+     * @return derivation at ds
+     */
+    private static double getFirstDerivationU(ParamPolynom p, double ds) {
         return p.getbU() + 2 * ds * p.getcU() + 3 * p.getdU() * Math.pow(ds, 2);
     }
 
-    private static double getFirstDerivationV(double ds, ParamPolynom p) {
+    /**
+     * first derivation
+     * @param p ODR param poly geometry
+     * @param ds position along geometry
+     * @return derivation at ds
+     */
+    private static double getFirstDerivationV(ParamPolynom p, double ds) {
         return p.getbV() + 2 * ds * p.getcV() + 3 * p.getdV() * Math.pow(ds, 2);
     }
 }
