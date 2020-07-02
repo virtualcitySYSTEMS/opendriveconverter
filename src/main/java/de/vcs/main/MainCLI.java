@@ -42,7 +42,7 @@ public class MainCLI {
 
     public static void main(String[] args) {
         try {
-            MainCLI mainCLI = new MainCLI("src/main/resources/2019-11-29_SAVe_Ingolstadt_Prio1-4.xodr", "src/main/resources/2019-11-29_SAVe_Ingolstadt_Prio1-4.json");
+            MainCLI mainCLI = new MainCLI("src/main/resources/2019-11-29_SAVe_Ingolstadt_Prio1-4.xodr", "src/main/resources/2019-11-29_SAVe_Ingolstadt_Prio1-4");
             mainCLI.doMain();
         } catch (Exception e) {
             e.printStackTrace();
@@ -74,28 +74,36 @@ public class MainCLI {
         if (xmlReaderFactory != null && odr != null) {
             XMLReader reader = xmlReaderFactory.createReader(file);
             odr = xmlObjects.fromXML(reader, OpenDRIVE.class);
+            odr.getHeader().getGeoReference().setEpsg("EPSG:32632"); //TODO input parameter
         }
     }
 
     private void writeODRFile(OpenDRIVE odr) {
         List<FormatConverter> converters = new ArrayList<>();
 //        converters.add(new GeoJsonConverter(GeoJsonConverter::convertRoads, outputFile));
-        converters.add(new GeoJsonConverter(GeoJsonConverter::convertReferenceLine, outputFile));
-        // TODO: converters.add(new CityGMLConverter(CityGMLConverter::convertRoads));
-        converters.forEach(c -> {
-            try {
-                c.write(c.convertFromODR(odr));
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        });
+        if (outputFile.exists() || outputFile.mkdir()) {
+            System.out.println("Writing Output in: " + outputFile.getAbsolutePath());
+            converters.add(new GeoJsonConverter(GeoJsonConverter::convertReferenceLine, new File(outputFile, "refLine.json")));
+            converters.add(new GeoJsonConverter(GeoJsonConverter::convertObjects, new File(outputFile, "objects.json")));
+            // TODO: converters.add(new CityGMLConverter(CityGMLConverter::convertRoads));
+            converters.forEach(c -> {
+                try {
+                    c.write(c.convertFromODR(odr));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            });
+        } else {
+            System.out.println("Couldn't create output directory: " + outputFile.getAbsolutePath());
+        }
+
     }
 
     private void buildAreaParallel() {
         areaWorkerPool.prestartCoreWorkers();
         odr.getRoads().forEach(o -> {
             areaWorkerPool.addWork(new RoadAreaGenerator(o));
-//            areaWorkerPool.addWork(new ObjectAreaGenerator(o));
+            areaWorkerPool.addWork(new ObjectAreaGenerator(o));
         });
         try {
             areaWorkerPool.shutdownAndWait();

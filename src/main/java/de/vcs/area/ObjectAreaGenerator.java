@@ -1,5 +1,6 @@
 package de.vcs.area;
 
+import de.vcs.model.odr.geometry.AbstractODRGeometry;
 import de.vcs.model.odr.geometry.STHPosition;
 import de.vcs.model.odr.geometry.STHRepeat;
 import de.vcs.model.odr.geometry.UVZPosition;
@@ -8,8 +9,8 @@ import de.vcs.model.odr.object.Outline;
 import de.vcs.model.odr.road.Road;
 import de.vcs.utils.geometry.Discretisation;
 import de.vcs.utils.geometry.OutlineCreator;
-import de.vcs.utils.geometry.Transformation;
 import de.vcs.utils.math.ODRMath;
+import de.vcs.utils.transformation.PointFactory;
 import org.locationtech.jts.geom.*;
 
 import java.util.ArrayList;
@@ -19,9 +20,11 @@ public class ObjectAreaGenerator extends AbstractAreaGenerator implements AreaGe
 
     Road road;
     ArrayList<Double> sRunner;
+    PointFactory pointFactory;
 
     public ObjectAreaGenerator(Road road) {
         this.road = road;
+        pointFactory = new PointFactory();
     }
 
     @Override
@@ -49,7 +52,9 @@ public class ObjectAreaGenerator extends AbstractAreaGenerator implements AreaGe
      * @return point geometry
      */
     private Point addPoint(AbstractObject obj) {
-        Point point = Transformation.st2xyPoint(road, obj.getLinearReference());
+        STHPosition sth = obj.getLinearReference();
+        AbstractODRGeometry geom = road.getPlanView().getOdrGeometries().floorEntry(sth.getS()).getValue();
+        Point point = pointFactory.getODRGeometryHandler(geom.getClass()).sth2xyzPoint(geom, sth.getS(), sth.getT());
         obj.getGmlGeometries().add(point);
         return point;
     }
@@ -64,7 +69,19 @@ public class ObjectAreaGenerator extends AbstractAreaGenerator implements AreaGe
         if (obj.getRadius() > 0.0) {
             obj.getGmlGeometries().add(OutlineCreator.createCircularOutline(point, obj.getRadius()));
         } else if (obj.getLength() > 0.0 && obj.getWidth() > 0.0) {
-            obj.getGmlGeometries().add(OutlineCreator.createRectangularOutline(road, obj.getLinearReference(), obj.getLength(), obj.getWidth()));
+            STHPosition sth = obj.getLinearReference();
+            AbstractODRGeometry geom = road.getPlanView().getOdrGeometries().floorEntry(sth.getS()).getValue();
+            Point p1 = pointFactory.getODRGeometryHandler(geom.getClass()).sth2xyzPoint(
+                    geom,
+                    sth.getS() - obj.getLength() / 2,
+                    sth.getT() - obj.getWidth() / 2
+                    );
+            Point p2 = pointFactory.getODRGeometryHandler(geom.getClass()).sth2xyzPoint(
+                    geom,
+                    sth.getS() + obj.getLength() / 2,
+                    sth.getT() + obj.getWidth() / 2
+            );
+            obj.getGmlGeometries().add(OutlineCreator.createRectangularOutline(p1, p2));
         }
     }
 
@@ -78,16 +95,23 @@ public class ObjectAreaGenerator extends AbstractAreaGenerator implements AreaGe
             CoordinateList coordinates = new CoordinateList();
             if (outline.getCornerRoad() != null) {
                 for (STHPosition position : outline.getCornerRoad()) {
-                    Point p = Transformation.st2xyPoint(road, position);
+                    AbstractODRGeometry geom = road.getPlanView().getOdrGeometries().floorEntry(position.getS()).getValue();
+                    Point p = pointFactory.getODRGeometryHandler(geom.getClass()).sth2xyzPoint(geom, position.getS(), position.getT());
                     coordinates.add(p.getCoordinate());
                 }
             } else {
                 STHPosition position = obj.getLinearReference();
                 for (UVZPosition uvz : outline.getCornerLocal()) {
-                    Point p = Transformation.st2xyPoint(road, position.getS() + uvz.getU(), position.getT() + uvz.getV());
+                    AbstractODRGeometry geom = road.getPlanView().getOdrGeometries().floorEntry(position.getS()).getValue();
+                    Point p = pointFactory.getODRGeometryHandler(geom.getClass()).sth2xyzPoint(
+                            geom,
+                            position.getS() + uvz.getU(),
+                            position.getT() + uvz.getV()
+                    );
                     coordinates.add(p.getCoordinate());
                 }
             }
+            coordinates.closeRing();
             GeometryFactory geometryFactory = new GeometryFactory();
             obj.getGmlGeometries().add(geometryFactory.createPolygon(coordinates.toCoordinateArray()));
         }
@@ -96,23 +120,24 @@ public class ObjectAreaGenerator extends AbstractAreaGenerator implements AreaGe
     private void addRepeatedOutline(AbstractObject obj) {
         if (obj.getRepeat().firstEntry().getValue().getDistance() == 0.0) {
             // continuous object
-
             ArrayList<Coordinate> inner = new ArrayList<>();
             ArrayList<Coordinate> outer = new ArrayList<>();
-            double start = obj.getRepeat().firstEntry().getValue().getLinearReference().getS();
-            double end = obj.getRepeat().lastEntry().getValue().getLinearReference().getS();
-            sRunner = Discretisation.generateSRunner(2.0, end, start);
+            double start = obj.getLinearReference().getS();
+            double end = start + obj.getValidLength();
+            sRunner = Discretisation.generateSRunner(1.0, end, start);
             sRunner.forEach(s -> {
                 STHRepeat repeat = obj.getRepeat().floorEntry(s).getValue();
-                double t = ODRMath.interpolate(repeat.getStart().getT(), repeat.getEnd().getT(), (s - repeat.getLinearReference().getS()) / repeat.getLength());
-                double width = ODRMath.interpolate(repeat.getWidthStart(), repeat.getWidthEnd(), (s - repeat.getLinearReference().getS()) / repeat.getLength());
+                double interp = Math.min(s - repeat.getLinearReference().getS(), repeat.getLength()) / repeat.getLength();
+                double t = ODRMath.interpolate(repeat.getStart().getT(), repeat.getEnd().getT(), interp);
+                double width = ODRMath.interpolate(repeat.getWidthStart(), repeat.getWidthEnd(), interp);
                 double zOffset = ODRMath.interpolate(
                         repeat.getStart().getIntertialTransform().getzOffset(),
                         repeat.getEnd().getIntertialTransform().getzOffset(),
-                        (s - repeat.getLinearReference().getS()) / repeat.getLength()
+                        interp
                 );
-                inner.add(Transformation.sth2xyzPoint(road, s, t - width / 2, zOffset).getCoordinate());
-                outer.add(Transformation.sth2xyzPoint(road, s, t + width / 2, zOffset).getCoordinate());
+                AbstractODRGeometry geom = road.getPlanView().getOdrGeometries().floorEntry(s).getValue();
+                inner.add(pointFactory.getODRGeometryHandler(geom.getClass()).sth2xyzPoint(geom, s, t - width / 2).getCoordinate()); //TODO zOffset
+                outer.add(pointFactory.getODRGeometryHandler(geom.getClass()).sth2xyzPoint(geom, s, t + width / 2).getCoordinate()); //TODO zOffset
             });
             obj.getGmlGeometries().add(OutlineCreator.createPolygonalOutline(inner, outer));
         } else {
@@ -122,20 +147,34 @@ public class ObjectAreaGenerator extends AbstractAreaGenerator implements AreaGe
                 double s = repeat.getLinearReference().getS();
                 int i = 0;
                 while (s < repeat.getLength()) {
-                    double t = ODRMath.interpolate(repeat.getStart().getT(), repeat.getEnd().getT(), i * repeat.getDistance() / repeat.getLength());
+                    AbstractODRGeometry geom = road.getPlanView().getOdrGeometries().floorEntry(s).getValue();
+                    double interp = Math.min(i * repeat.getDistance(), repeat.getLength()) / repeat.getLength();
+                    double t = ODRMath.interpolate(repeat.getStart().getT(), repeat.getEnd().getT(), interp);
                     if (repeat.getRadiusStart() != 0.0 && repeat.getRadiusEnd() != 0.0) {
-                        double radius = ODRMath.interpolate(repeat.getRadiusStart(), repeat.getRadiusEnd(), i * repeat.getDistance() / repeat.getLength());
-                        Point point = Transformation.st2xyPoint(road, s, t);
+                        double radius = ODRMath.interpolate(repeat.getRadiusStart(), repeat.getRadiusEnd(), interp);
+                        Point point = pointFactory.getODRGeometryHandler(geom.getClass()).sth2xyzPoint(geom, s, t);
                         obj.getGmlGeometries().add(OutlineCreator.createCircularOutline(point, radius));
                     } else {
-                        double length = ODRMath.interpolate(repeat.getLengthStart(), repeat.getLengthEnd(), i * repeat.getDistance() / repeat.getLength());
-                        double width = ODRMath.interpolate(repeat.getWidthStart(), repeat.getWidthEnd(), i * repeat.getDistance() / repeat.getLength());
+                        double length = ODRMath.interpolate(repeat.getLengthStart(), repeat.getLengthEnd(), interp);
+                        double width = ODRMath.interpolate(repeat.getWidthStart(), repeat.getWidthEnd(), interp);
                         double zOffset = ODRMath.interpolate(
                                 repeat.getStart().getIntertialTransform().getzOffset(),
                                 repeat.getEnd().getIntertialTransform().getzOffset(),
-                                i * repeat.getDistance() / repeat.getLength()
+                                interp
                         );
-                        obj.getGmlGeometries().add(OutlineCreator.createRectangularOutline(road, new STHPosition(s, t, zOffset), length, width));
+                        //TODO zOffset
+                        Point p1 = pointFactory.getODRGeometryHandler(geom.getClass()).sth2xyzPoint(
+                                geom,
+                                s - length / 2,
+                                t - width / 2
+                        );
+                        //TODO zOffset
+                        Point p2 = pointFactory.getODRGeometryHandler(geom.getClass()).sth2xyzPoint(
+                                geom,
+                                s + length / 2,
+                                t + width / 2
+                        );
+                        obj.getGmlGeometries().add(OutlineCreator.createRectangularOutline(p1, p2));
                     }
                     s += repeat.getDistance();
                     i++;

@@ -53,7 +53,8 @@ public class Transformation {
         }
         return transformedGeometries;
     }
-
+    //TODO delete
+/*
     public static Point st2xyPoint(ParamPolynom ppoly, STHPosition sth) {
         return Transformation.st2xyPoint(ppoly, sth.getS(), sth.getT());
     }
@@ -102,5 +103,5 @@ public class Transformation {
         Polynom poly = (Polynom) road.getElevationProfile().getElevations().floorEntry(s).getValue();
         double elevation = PolynomHelper.calcPolynomValue(s,poly);
         return new GeometryFactory().createPoint(new Coordinate(point.getX(), point.getY(), elevation + h));
-    }
+    } */
 }

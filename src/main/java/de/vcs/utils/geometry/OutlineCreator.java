@@ -1,12 +1,8 @@
 package de.vcs.utils.geometry;
 
-import de.vcs.model.odr.geometry.STHPosition;
-import de.vcs.model.odr.road.Road;
 import org.locationtech.jts.geom.*;
-
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Set;
 
 public class OutlineCreator {
 
@@ -14,17 +10,7 @@ public class OutlineCreator {
         return (Polygon) point.buffer(radius);
     }
 
-    public static Polygon createRectangularOutline(Road road, STHPosition sth, double length, double width) {
-        Point p1 = Transformation.st2xyPoint(
-                road,
-                sth.getS() - length / 2,
-                sth.getT() - width / 2
-        );
-        Point p2 = Transformation.st2xyPoint(
-                road,
-                sth.getS() + length / 2,
-                sth.getT() + width / 2
-        );
+    public static Polygon createRectangularOutline(Point p1, Point p2) {
         Coordinate[] coordinates = new Coordinate[]{
                 p1.getCoordinate(),
                 new Coordinate( p2.getX(), p1.getY()),
@@ -41,8 +27,11 @@ public class OutlineCreator {
         coords.addAll(outer);
         Collections.reverse(inner); // does this change the global state of the array?
         coords.addAll(inner);
-        coords.add(outer.get(0));
+        coords.closeRing();
         GeometryFactory geometryFactory = new GeometryFactory();
-        return geometryFactory.createPolygon(coords.toCoordinateArray());
+        if (coords.size() > 3) {
+            return geometryFactory.createPolygon(coords.toCoordinateArray());
+        }
+        return null;
     }
 }

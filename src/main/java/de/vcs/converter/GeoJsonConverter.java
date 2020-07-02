@@ -3,8 +3,7 @@ package de.vcs.converter;
 import de.vcs.model.odr.core.OpenDRIVE;
 import de.vcs.model.odr.lane.Lane;
 import de.vcs.model.odr.lane.LaneSection;
-import de.vcs.model.odr.object.AbstractObject;
-import de.vcs.model.odr.object.GenericObject;
+import de.vcs.model.odr.object.*;
 import de.vcs.model.odr.road.Road;
 import de.vcs.utils.geometry.Transformation;
 import org.geotools.data.DataUtilities;
@@ -66,9 +65,7 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
                     lines.removeIf(g -> !(g instanceof LineString));
                     try {
                         lines = Transformation.crsTransform(lines, sourceCRS, targetCRS);
-                    } catch (FactoryException e) {
-                        e.printStackTrace();
-                    } catch (TransformException e) {
+                    } catch (FactoryException | TransformException e) {
                         e.printStackTrace();
                     }
                     for (Geometry line : lines) {
@@ -223,14 +220,19 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
                     Polygon[] polygonArray = new Polygon[polygons.size()];
                     MultiPolygon multiPolygon = geomFactory.createMultiPolygon(polygons.toArray(polygonArray));
                     featureBuilder.add(multiPolygon);
-                    SimpleFeature laneFeature = featureBuilder.buildFeature(road.getId() + "_" + obj.getId());
-                    laneFeature.setAttribute("id", obj.getId());
-                    laneFeature.setAttribute("name", obj.getName());
+                    SimpleFeature objFeature = featureBuilder.buildFeature(obj.getId());
+                    objFeature.setAttribute("name", obj.getName());
                     if (obj instanceof GenericObject) {
-                        laneFeature.setAttribute("type", ((GenericObject) obj).getType());
-                        laneFeature.setAttribute("name", ((GenericObject) obj).getSubtype());
+                        objFeature.setAttribute("subtype", ((GenericObject) obj).getSubtype());
+                        objFeature.setAttribute("type", ((GenericObject) obj).getType());
+                    } else if (obj instanceof Bridge) {
+                        objFeature.setAttribute("type", ((Bridge) obj).getType());
+                    } else if (obj instanceof Tunnel) {
+                        objFeature.setAttribute("type", ((Tunnel) obj).getType());
+                    } else if (obj instanceof ObjectReference) {
+                        continue;
                     }
-                    geojson.getFeatures().add(laneFeature);
+                    geojson.getFeatures().add(objFeature);
                 }
             }
         } catch (FactoryException | TransformException e) {
