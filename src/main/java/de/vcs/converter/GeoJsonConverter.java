@@ -27,6 +27,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.UUID;
 import java.util.function.Function;
 
 public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
@@ -72,7 +73,8 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
                         // i++ for unique id and name ???
                         featureBuilder.reset();
                         featureBuilder.add(line);
-                        SimpleFeature roadFeature = featureBuilder.buildFeature(String.valueOf(road.getId()));
+                        //TODO find UUID for lanes. Roadid + LaneSectionID + LaneID?
+                        SimpleFeature roadFeature = featureBuilder.buildFeature(String.valueOf(UUID.randomUUID()));
                         roadFeature.setAttribute("Name", road.getName());
                         geojson.getFeatures().add(roadFeature);
                     }

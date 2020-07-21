@@ -34,7 +34,7 @@ public class RoadAreaGenerator extends AbstractAreaGenerator implements AreaGene
         road.getLanes().getLaneSections().keySet().forEach(key -> {
             double sStart = key;
             double sEnd;
-            if (road.getLanes().getLaneSections().size() <= 1) {
+            if (road.getLanes().getLaneSections().size() <= 1 | key == road.getLanes().getLaneSections().lastKey()) {
                 sEnd = road.getLength();
             } else {
                 try {
@@ -59,8 +59,8 @@ public class RoadAreaGenerator extends AbstractAreaGenerator implements AreaGene
     /**
      * Return centerline point for given s-position. Includes lane offset.
      *
-     * @param s    global s-position of road
-     * @param ls   LaneSection
+     * @param s  global s-position of road
+     * @param ls LaneSection
      * @return The Point of center line at givern s-position
      */
     private Point fillCenterLine(Double s, LaneSection ls) {
@@ -76,15 +76,5 @@ public class RoadAreaGenerator extends AbstractAreaGenerator implements AreaGene
         return pointFactory.getODRGeometryHandler(geom.getClass()).sth2xyzPoint(geom, s, offset);
     }
 
-//    private Point fillCenterLine(Double s, LaneSection ls, Road road) {
-//        double offset;
-//        if (road.getLanes().getLaneOffsets().isEmpty()) {
-//            offset = 0.0;
-//        } else {
-//            double localS = road.getLanes().getLaneOffsets().floorEntry(s).getKey();
-//            offset = PolynomHelper
-//                    .calcPolynomValue(s - localS, road.getLanes().getLaneOffsets().floorEntry(s).getValue());
-//        }
-//        return Transformation.st2xyPoint(road, s, offset);
-//    }
+
 }
