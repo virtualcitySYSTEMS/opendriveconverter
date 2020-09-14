@@ -8,10 +8,9 @@ import org.locationtech.jts.geom.Point;
 public class PolynomHelper {
 
     /**
-     *
-     * @param p ODR geometry
+     * @param p  ODR geometry
      * @param ds local s on geometry
-     * @param t offset perpendicular to curve
+     * @param t  offset perpendicular to curve
      * @return uv point
      */
     public static Point calcUVPoint(Polynom p, double ds, double t) {
@@ -31,12 +30,13 @@ public class PolynomHelper {
 
     /**
      * normal vector at position s
-     * @param p ODR param poly geometry
+     *
+     * @param p  ODR param poly geometry
      * @param ds position along geometry
      * @return normal vector
      */
     public static Point calcNormalVector(Polynom p, double ds) {
-        double tu = ds;
+        double tu = 1.0;
         double tv = getFirstDerivation(p, ds);
         double tun = ODRMath.normalizeComponent(tu, tv);
         double tvn = ODRMath.normalizeComponent(tv, tu);
@@ -44,7 +44,7 @@ public class PolynomHelper {
     }
 
     /**
-     * @param p ODR param poly geometry
+     * @param p  ODR param poly geometry
      * @param ds position along geometry
      * @return polynom value at ds
      */
@@ -54,7 +54,8 @@ public class PolynomHelper {
 
     /**
      * first derivation
-     * @param p ODR param poly geometry
+     *
+     * @param p  ODR param poly geometry
      * @param ds position along geometry
      * @return derivation at ds
      */

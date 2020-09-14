@@ -7,12 +7,13 @@ import org.locationtech.jts.geom.Point;
 
 public class LineHelper {
     /**
-     *
      * @param line ODR geometry
-     * @param ds local s on geometry
-     * @param t offset perpendicular to curve
+     * @param ds   local s on geometry
+     * @param t    offset perpendicular to curve
      * @return uv point
      */
+
+    //todo this is wrong. We need to calc normal vector vor t (offset)
     public static Point calcUVPoint(Line line, double ds, double t) {
         return new GeometryFactory().createPoint(new Coordinate(ds, t));
     }

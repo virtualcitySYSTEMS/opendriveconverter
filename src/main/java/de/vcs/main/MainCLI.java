@@ -42,7 +42,7 @@ public class MainCLI {
 
     public static void main(String[] args) {
         try {
-            MainCLI mainCLI = new MainCLI("src/main/resources/realRoadExample.xodr", "src/main/resources/realRoadExample");
+            MainCLI mainCLI = new MainCLI("src/main/resources/2019-11-29_SAVe_Ingolstadt_Prio1-4.xodr", "src/main/resources/2019-11-29_SAVe_Ingolstadt_Prio1-4");
             mainCLI.doMain();
         } catch (Exception e) {
             e.printStackTrace();
@@ -103,7 +103,7 @@ public class MainCLI {
         areaWorkerPool.prestartCoreWorkers();
         odr.getRoads().forEach(o -> {
             areaWorkerPool.addWork(new RoadAreaGenerator(o));
-            areaWorkerPool.addWork(new ObjectAreaGenerator(o));
+            //areaWorkerPool.addWork(new ObjectAreaGenerator(o));
         });
         try {
             areaWorkerPool.shutdownAndWait();

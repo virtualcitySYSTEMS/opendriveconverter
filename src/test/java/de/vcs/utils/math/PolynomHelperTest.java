@@ -22,4 +22,12 @@ public class PolynomHelperTest {
         System.out.println(point.getX());
         System.out.println(point.getY());
     }
+
+    @Test
+    public void testNormal() {
+        Polynom p = new Polynom(0.0, 1.0, 1.0, 1.0);
+        Point point = PolynomHelper.calcNormalVector(p, 0.0);
+        System.out.println(point.getX());
+        System.out.println(point.getY());
+    }
 }

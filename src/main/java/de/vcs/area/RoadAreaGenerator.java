@@ -46,9 +46,9 @@ public class RoadAreaGenerator extends AbstractAreaGenerator implements AreaGene
             if (sStart != sEnd) {
                 LaneSection ls = road.getLanes().getLaneSections().get(key);
                 LaneSectionParameters lsp = new LaneSectionParameters();
-                ArrayList<Double> sPositions = Discretisation.generateSRunner(2.0, sEnd - sStart);
+                ArrayList<Double> sPositions = Discretisation.generateSRunner(1.0, sEnd - sStart);
                 sPositions.forEach(s -> {
-                    lsp.getCenterLine().add(fillCenterLine(sStart + s, ls));
+                    lsp.getCenterLine().add(fillCenterLine(sStart + s, ls, true));
                 });
                 ls.getCenterLane().getGmlGeometries()
                         .add(ODRGeometryFactory.create(JTSConstants.LINESTRING, lsp.getCenterLine()));
@@ -65,13 +65,28 @@ public class RoadAreaGenerator extends AbstractAreaGenerator implements AreaGene
      */
     private Point fillCenterLine(Double s, LaneSection ls) {
         AbstractODRGeometry geom = road.getPlanView().getOdrGeometries().floorEntry(s).getValue();
-        double offset;
+        double offset = 0.0;
         if (road.getLanes().getLaneOffsets().isEmpty()) {
             offset = 0.0;
         } else {
             double localS = road.getLanes().getLaneOffsets().floorEntry(s).getKey();
             offset = PolynomHelper
                     .calcPolynomValue(road.getLanes().getLaneOffsets().floorEntry(s).getValue(), s - localS);
+        }
+        return pointFactory.getODRGeometryHandler(geom.getClass()).sth2xyzPoint(geom, s, offset);
+    }
+
+    private Point fillCenterLine(Double s, LaneSection ls, boolean applyLaneOffset) {
+        AbstractODRGeometry geom = road.getPlanView().getOdrGeometries().floorEntry(s).getValue();
+        double offset = 0.0;
+        if (applyLaneOffset) {
+            if (road.getLanes().getLaneOffsets().isEmpty()) {
+                offset = 0.0;
+            } else {
+                double localS = road.getLanes().getLaneOffsets().floorEntry(s).getKey();
+                offset = PolynomHelper
+                        .calcPolynomValue(road.getLanes().getLaneOffsets().floorEntry(s).getValue(), s - localS);
+            }
         }
         return pointFactory.getODRGeometryHandler(geom.getClass()).sth2xyzPoint(geom, s, offset);
     }

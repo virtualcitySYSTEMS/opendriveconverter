@@ -8,10 +8,9 @@ import org.locationtech.jts.geom.Point;
 public class ParamPolynomHelper {
 
     /**
-     *
-     * @param p ODR geometry
+     * @param p  ODR geometry
      * @param ds local s on geometry
-     * @param t offset perpendicular to curve
+     * @param t  offset perpendicular to curve
      * @return uv point
      */
     public static Point calcUVPoint(ParamPolynom p, double ds, double t) {
@@ -26,25 +25,29 @@ public class ParamPolynomHelper {
             offsetY = nvpoint.getY() * t;
         }
         return new GeometryFactory().createPoint(
-                new Coordinate(uvpoint.getX() - offsetX, uvpoint.getY() + offsetY));
+                new Coordinate(uvpoint.getX() + offsetX, uvpoint.getY() + offsetY));
     }
 
     /**
      * normal vector at position s
-     * @param p ODR param poly geometry
+     *
+     * @param p  ODR param poly geometry
      * @param ds position along geometry
      * @return normal vector
      */
     public static Point calcNormalVector(ParamPolynom p, double ds) {
+        double u = calcParamPolynomValueU(p, ds);
+        double v = calcParamPolynomValueV(p, ds);
         double tu = getFirstDerivationU(p, ds);
         double tv = getFirstDerivationV(p, ds);
-        double tun = ODRMath.normalizeComponent(tu, tv);
-        double tvn = ODRMath.normalizeComponent(tv, tu);
-        return new GeometryFactory().createPoint(new Coordinate(- tvn, tun));
+        double d = Math.sqrt(Math.pow(tu, 2) + Math.pow(tv, 2));
+        double na = d * -1 * v;
+        double nb = d * u;
+        return new GeometryFactory().createPoint(new Coordinate(na, nb));
     }
 
     /**
-     * @param p ODR param poly geometry
+     * @param p  ODR param poly geometry
      * @param ds position along geometry
      * @return polynom value u at ds
      */
@@ -53,7 +56,7 @@ public class ParamPolynomHelper {
     }
 
     /**
-     * @param p ODR param poly geometry
+     * @param p  ODR param poly geometry
      * @param ds position along geometry
      * @return polynom value v at ds
      */
@@ -63,7 +66,8 @@ public class ParamPolynomHelper {
 
     /**
      * first derivation
-     * @param p ODR param poly geometry
+     *
+     * @param p  ODR param poly geometry
      * @param ds position along geometry
      * @return derivation at ds
      */
@@ -73,7 +77,8 @@ public class ParamPolynomHelper {
 
     /**
      * first derivation
-     * @param p ODR param poly geometry
+     *
+     * @param p  ODR param poly geometry
      * @param ds position along geometry
      * @return derivation at ds
      */
