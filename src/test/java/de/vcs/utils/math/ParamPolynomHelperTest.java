@@ -30,4 +30,13 @@ public class ParamPolynomHelperTest {
         System.out.println(point.getX());
         System.out.println(point.getY());
     }
+
+    @Test
+    public void testNormal() {
+        ParamPolynom p = new ParamPolynom(0, 1, 1, 1, 0, 1, 1, 1);
+        Point point = ParamPolynomHelper.calcNormalVector(p, 12.0);
+        System.out.println(ParamPolynomHelper.getFirstDerivationU(p, 12.0));
+        System.out.println(point.getX());
+        System.out.println(point.getY());
+    }
 }

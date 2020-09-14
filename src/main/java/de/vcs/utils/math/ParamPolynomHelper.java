@@ -36,14 +36,12 @@ public class ParamPolynomHelper {
      * @return normal vector
      */
     public static Point calcNormalVector(ParamPolynom p, double ds) {
-        double u = calcParamPolynomValueU(p, ds);
-        double v = calcParamPolynomValueV(p, ds);
-        double tu = getFirstDerivationU(p, ds);
-        double tv = getFirstDerivationV(p, ds);
-        double d = Math.sqrt(Math.pow(tu, 2) + Math.pow(tv, 2));
-        double na = d * -1 * v;
-        double nb = d * u;
-        return new GeometryFactory().createPoint(new Coordinate(na, nb));
+        double du = getFirstDerivationU(p, ds);
+        double dv = getFirstDerivationV(p, ds);
+        double d = Math.sqrt(Math.pow(du, 2) + Math.pow(dv, 2));
+        double nu = -1 * dv / d;
+        double nv = du / d;
+        return new GeometryFactory().createPoint(new Coordinate(nu, nv));
     }
 
     /**
@@ -71,7 +69,7 @@ public class ParamPolynomHelper {
      * @param ds position along geometry
      * @return derivation at ds
      */
-    private static double getFirstDerivationU(ParamPolynom p, double ds) {
+    public static double getFirstDerivationU(ParamPolynom p, double ds) {
         return p.getbU() + 2 * ds * p.getcU() + 3 * p.getdU() * Math.pow(ds, 2);
     }
 
@@ -82,7 +80,7 @@ public class ParamPolynomHelper {
      * @param ds position along geometry
      * @return derivation at ds
      */
-    private static double getFirstDerivationV(ParamPolynom p, double ds) {
+    public static double getFirstDerivationV(ParamPolynom p, double ds) {
         return p.getbV() + 2 * ds * p.getcV() + 3 * p.getdV() * Math.pow(ds, 2);
     }
 }

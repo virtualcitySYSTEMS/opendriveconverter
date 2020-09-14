@@ -48,7 +48,7 @@ public class RoadAreaGenerator extends AbstractAreaGenerator implements AreaGene
                 LaneSectionParameters lsp = new LaneSectionParameters();
                 ArrayList<Double> sPositions = Discretisation.generateSRunner(1.0, sEnd - sStart);
                 sPositions.forEach(s -> {
-                    lsp.getCenterLine().add(fillCenterLine(sStart + s, ls, true));
+                    lsp.getCenterLine().add(fillCenterLine(sStart + s, ls, false));
                 });
                 ls.getCenterLane().getGmlGeometries()
                         .add(ODRGeometryFactory.create(JTSConstants.LINESTRING, lsp.getCenterLine()));
