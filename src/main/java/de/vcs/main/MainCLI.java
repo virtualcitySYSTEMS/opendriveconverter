@@ -42,7 +42,7 @@ public class MainCLI {
 
     public static void main(String[] args) {
         try {
-            MainCLI mainCLI = new MainCLI("src/main/resources/2019-11-29_SAVe_Ingolstadt_Prio1-4.xodr", "src/main/resources/2019-11-29_SAVe_Ingolstadt_Prio1-4_nooff");
+            MainCLI mainCLI = new MainCLI("src/main/resources/2019-11-29_SAVe_Ingolstadt_Prio1-4.xodr", "src/main/resources/2019-11-29_SAVe_Ingolstadt_Prio1-4");
             mainCLI.doMain();
         } catch (Exception e) {
             e.printStackTrace();

@@ -2,8 +2,10 @@ package de.vcs.area;
 
 import de.vcs.area.odrgeometryfactory.ODRGeometryFactory;
 import de.vcs.constants.JTSConstants;
+import de.vcs.datatypes.LaneParameter;
 import de.vcs.datatypes.LaneSectionParameters;
 import de.vcs.model.odr.geometry.AbstractODRGeometry;
+import de.vcs.model.odr.geometry.Polynom;
 import de.vcs.model.odr.lane.LaneSection;
 import de.vcs.model.odr.road.Road;
 import de.vcs.utils.geometry.Discretisation;
@@ -48,35 +50,16 @@ public class RoadAreaGenerator extends AbstractAreaGenerator implements AreaGene
                 LaneSectionParameters lsp = new LaneSectionParameters();
                 ArrayList<Double> sPositions = Discretisation.generateSRunner(1.0, sEnd - sStart);
                 sPositions.forEach(s -> {
-                    lsp.getCenterLine().add(fillCenterLine(sStart + s, ls, false));
+                    fillCenterLine(sStart + s, lsp, true);
                 });
-                ls.getCenterLane().getGmlGeometries()
-                        .add(ODRGeometryFactory.create(JTSConstants.LINESTRING, lsp.getCenterLine()));
+                //ls.getCenterLane().getGmlGeometries()
+                // .add(ODRGeometryFactory.create(JTSConstants.LINESTRING, lsp.getLanes().get(0)));
             }
         });
     }
 
-    /**
-     * Return centerline point for given s-position. Includes lane offset.
-     *
-     * @param s  global s-position of road
-     * @param ls LaneSection
-     * @return The Point of center line at givern s-position
-     */
-    private Point fillCenterLine(Double s, LaneSection ls) {
-        AbstractODRGeometry geom = road.getPlanView().getOdrGeometries().floorEntry(s).getValue();
-        double offset = 0.0;
-        if (road.getLanes().getLaneOffsets().isEmpty()) {
-            offset = 0.0;
-        } else {
-            double localS = road.getLanes().getLaneOffsets().floorEntry(s).getKey();
-            offset = PolynomHelper
-                    .calcPolynomValue(road.getLanes().getLaneOffsets().floorEntry(s).getValue(), s - localS);
-        }
-        return pointFactory.getODRGeometryHandler(geom.getClass()).sth2xyzPoint(geom, s, offset);
-    }
 
-    private Point fillCenterLine(Double s, LaneSection ls, boolean applyLaneOffset) {
+    private void fillCenterLine(Double s, LaneSectionParameters lsp, boolean applyLaneOffset) {
         AbstractODRGeometry geom = road.getPlanView().getOdrGeometries().floorEntry(s).getValue();
         double offset = 0.0;
         if (applyLaneOffset) {
@@ -88,8 +71,23 @@ public class RoadAreaGenerator extends AbstractAreaGenerator implements AreaGene
                         .calcPolynomValue(road.getLanes().getLaneOffsets().floorEntry(s).getValue(), s - localS);
             }
         }
-        return pointFactory.getODRGeometryHandler(geom.getClass()).sth2xyzPoint(geom, s, offset);
+        if (lsp.getLanes().get(0) == null) {
+            lsp.getLanes().put(0, new ArrayList<LaneParameter>());
+        }
+        lsp.getLanes().get(0).add();
+        pointFactory.getODRGeometryHandler(geom.getClass()).sth2xyzPoint(geom, s, offset));
     }
 
-
+    private void fillLanes(Double s, LaneSectionParameters lsp, LaneSection ls) {
+        double localS = s - ls.getLinearReference().getS();
+        ls.getRightLanes().forEach((key, value) -> {
+            Polynom poly = value.getWidths().floorEntry(localS).getValue();
+            double polyS = localS - poly.getLinearReference().getS();
+            double width = PolynomHelper.calcPolynomValue(poly, polyS);
+            if (lsp.getLanes().get(key) == null) {
+                lsp.getLanes().put(key, new ArrayList<LaneParameter>());
+            }
+            lsp.getLanes().get(key).add()
+        });
+    }
 }

@@ -8,27 +8,18 @@ import java.util.TreeMap;
 
 public class LaneSectionParameters {
 
-    private ArrayList<Point> centerLine;
-    private TreeMap<Integer, Point> lanes;
+    private TreeMap<Integer, ArrayList<LaneParameter>> lanes;
 
     public LaneSectionParameters() {
-        centerLine = new ArrayList<>();
         lanes = new TreeMap<>();
     }
 
-    public ArrayList<Point> getCenterLine() {
-        return centerLine;
-    }
-
-    public void setCenterLine(ArrayList<Point> centerLine) {
-        this.centerLine = centerLine;
-    }
-
-    public TreeMap<Integer, Point> getLanes() {
+    public TreeMap<Integer, ArrayList<LaneParameter>> getLanes() {
         return lanes;
     }
 
-    public void setLanes(TreeMap<Integer, Point> lanes) {
+    public void setLanes(TreeMap<Integer, ArrayList<LaneParameter>> lanes) {
         this.lanes = lanes;
     }
 }
+

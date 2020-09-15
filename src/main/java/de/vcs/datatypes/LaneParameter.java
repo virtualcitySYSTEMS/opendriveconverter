@@ -1,20 +1,39 @@
 package de.vcs.datatypes;
 
+import de.vcs.model.odr.geometry.AbstractODRGeometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
 
 public class LaneParameter {
 
+    private AbstractODRGeometry geom;
+    private double s;
     private double width;
-    private Point point;
+
 
     public LaneParameter() {
-        point = new GeometryFactory().createPoint();
     }
 
-    public LaneParameter(int id, double width, Point point) {
+    public LaneParameter(AbstractODRGeometry geom, double s, double width) {
+        this.geom = geom;
+        this.s = s;
         this.width = width;
-        this.point = point;
+    }
+
+    public AbstractODRGeometry getGeom() {
+        return geom;
+    }
+
+    public void setGeom(AbstractODRGeometry geom) {
+        this.geom = geom;
+    }
+
+    public double getS() {
+        return s;
+    }
+
+    public void setS(double s) {
+        this.s = s;
     }
 
     public double getWidth() {
@@ -23,13 +42,5 @@ public class LaneParameter {
 
     public void setWidth(double width) {
         this.width = width;
-    }
-
-    public Point getPoint() {
-        return point;
-    }
-
-    public void setPoint(Point point) {
-        this.point = point;
     }
 }
