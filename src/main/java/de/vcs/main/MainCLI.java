@@ -84,6 +84,7 @@ public class MainCLI {
         if (outputFile.exists() || outputFile.mkdir()) {
             System.out.println("Writing Output in: " + outputFile.getAbsolutePath());
             converters.add(new GeoJsonConverter(GeoJsonConverter::convertReferenceLine, new File(outputFile, "refLine.json")));
+            converters.add(new GeoJsonConverter(GeoJsonConverter::convertLanes, new File(outputFile, "lanes.json")));
 //            converters.add(new GeoJsonConverter(GeoJsonConverter::convertObjects, new File(outputFile, "objects.json")));
             // TODO: converters.add(new CityGMLConverter(CityGMLConverter::convertRoads));
             converters.forEach(c -> {

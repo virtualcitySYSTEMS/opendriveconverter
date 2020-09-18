@@ -170,7 +170,7 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
                         Polygon[] polygonArray = new Polygon[polygons.size()];
                         MultiPolygon multiPolygon = geomFactory.createMultiPolygon(polygons.toArray(polygonArray));
                         featureBuilder.add(multiPolygon);
-                        SimpleFeature laneFeature = featureBuilder.buildFeature(road.getId() + "_" + laneId);
+                        SimpleFeature laneFeature = featureBuilder.buildFeature(UUID.randomUUID().toString());
                         laneFeature.setAttribute("RoadId", road.getId());
                         laneFeature.setAttribute("LaneSection", s);
                         laneFeature.setAttribute("LaneId", laneId);

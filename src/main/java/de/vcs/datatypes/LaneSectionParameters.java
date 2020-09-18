@@ -8,17 +8,17 @@ import java.util.TreeMap;
 
 public class LaneSectionParameters {
 
-    private TreeMap<Integer, ArrayList<LaneParameter>> lanes;
+    private TreeMap<Integer, ArrayList<Point>> lanes;
 
     public LaneSectionParameters() {
         lanes = new TreeMap<>();
     }
 
-    public TreeMap<Integer, ArrayList<LaneParameter>> getLanes() {
+    public TreeMap<Integer, ArrayList<Point>> getLanes() {
         return lanes;
     }
 
-    public void setLanes(TreeMap<Integer, ArrayList<LaneParameter>> lanes) {
+    public void setLanes(TreeMap<Integer, ArrayList<Point>> lanes) {
         this.lanes = lanes;
     }
 }
