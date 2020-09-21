@@ -73,24 +73,21 @@ public class RoadAreaGenerator extends AbstractAreaGenerator implements AreaGene
         } else {
             double sPolyOffset = road.getLanes().getLaneOffsets().floorEntry(sGlobal).getKey();
             offset = PolynomHelper
-                    .calcPolynomValue(road.getLanes().getLaneOffsets().floorEntry(sGlobal).getValue(), sGlobal - sPolyOffset);
+                    .calcPolynomValue(road.getLanes().getLaneOffsets().floorEntry(sGlobal).getValue(),
+                            sGlobal - sPolyOffset);
         }
-
         // init Treemap
         int minLaneID = 0;
         int maxLaneID = 0;
         try {
             minLaneID = ls.getRightLanes().firstKey();
-
         } catch (NoSuchElementException e) {
         }
         try {
             maxLaneID = ls.getLeftLanes().lastKey();
         } catch (NoSuchElementException e) {
         }
-
         initLSPTreeMap(minLaneID, maxLaneID, lsp);
-
         //right lanes
         double currentRightWidth = offset;
         for (int i = -1; i >= minLaneID; i--) {
@@ -98,7 +95,8 @@ public class RoadAreaGenerator extends AbstractAreaGenerator implements AreaGene
             double sPolyWidth = sLocal - poly.getStTransform().getsOffset();
             double width = PolynomHelper.calcPolynomValue(poly, sPolyWidth);
             currentRightWidth -= width;
-            lsp.getLanes().get(i).add(pointFactory.getODRGeometryHandler(geom.getClass()).sth2xyzPoint(geom, sGlobal, currentRightWidth));
+            lsp.getLanes().get(i).add(pointFactory.getODRGeometryHandler(geom.getClass())
+                    .sth2xyzPoint(geom, sGlobal, currentRightWidth));
         }
         double currentLeftWidth = offset;
         for (int i = 1; i <= maxLaneID; i++) {
@@ -106,10 +104,11 @@ public class RoadAreaGenerator extends AbstractAreaGenerator implements AreaGene
             double sPolyWidth = sLocal - poly.getStTransform().getsOffset();
             double width = PolynomHelper.calcPolynomValue(poly, sPolyWidth);
             currentLeftWidth += width;
-            lsp.getLanes().get(i).add(pointFactory.getODRGeometryHandler(geom.getClass()).sth2xyzPoint(geom, sGlobal, currentLeftWidth));
+            lsp.getLanes().get(i).add(pointFactory.getODRGeometryHandler(geom.getClass())
+                    .sth2xyzPoint(geom, sGlobal, currentLeftWidth));
         }
-
-        lsp.getLanes().get(0).add(pointFactory.getODRGeometryHandler(geom.getClass()).sth2xyzPoint(geom, sGlobal, offset));
+        lsp.getLanes().get(0)
+                .add(pointFactory.getODRGeometryHandler(geom.getClass()).sth2xyzPoint(geom, sGlobal, offset));
     }
 
     private void initLSPTreeMap(int minLaneID, int maxLaneID, LaneSectionParameters lsp) {
@@ -118,7 +117,6 @@ public class RoadAreaGenerator extends AbstractAreaGenerator implements AreaGene
                 lsp.getLanes().put(i, new ArrayList<>());
             }
         }
-
     }
 
     private boolean isLSPTreeMap(int key, LaneSectionParameters lsp) {
@@ -130,7 +128,8 @@ public class RoadAreaGenerator extends AbstractAreaGenerator implements AreaGene
     }
 
     private void createCenterLine(LaneSection ls, LaneSectionParameters lsp) {
-        ls.getCenterLane().getGmlGeometries().add(ODRGeometryFactory.create(JTSConstants.LINESTRING, lsp.getLanes().get(0)));
+        ls.getCenterLane().getGmlGeometries()
+                .add(ODRGeometryFactory.create(JTSConstants.LINESTRING, lsp.getLanes().get(0)));
     }
 
     private void createLanePolygons(LaneSection ls, LaneSectionParameters lsp) {
@@ -138,16 +137,13 @@ public class RoadAreaGenerator extends AbstractAreaGenerator implements AreaGene
         int maxLaneID = 0;
         try {
             minLaneID = ls.getRightLanes().firstKey();
-
         } catch (NoSuchElementException e) {
         }
         try {
             maxLaneID = ls.getLeftLanes().lastKey();
         } catch (NoSuchElementException e) {
         }
-
         for (int i = minLaneID; i < maxLaneID; i++) {
-
             ArrayList<Point> lanePointsFirst = lsp.getLanes().get(i);
             ArrayList<Point> lanePoints = new ArrayList<>();
             ArrayList<Point> lanePointsNext = lsp.getLanes().get(i + 1);
@@ -160,14 +156,13 @@ public class RoadAreaGenerator extends AbstractAreaGenerator implements AreaGene
             lanePoints.add(lanePointsFirst.get(0));
             Polygon polygon = (Polygon) ODRGeometryFactory.create(JTSConstants.POLYGON, lanePoints);
             try {
-                if (i < 1) {
+                if (i < 0) {
                     ls.getRightLanes().get(i).getGmlGeometries().add(polygon);
                 } else {
-                    ls.getLeftLanes().get(i).getGmlGeometries().add(polygon);
+                    ls.getLeftLanes().get(i + 1).getGmlGeometries().add(polygon);
                 }
             } catch (NullPointerException e) {
             }
         }
     }
-
 }

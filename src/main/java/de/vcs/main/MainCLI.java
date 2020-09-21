@@ -42,7 +42,8 @@ public class MainCLI {
 
     public static void main(String[] args) {
         try {
-            MainCLI mainCLI = new MainCLI("src/main/resources/2019-11-29_SAVe_Ingolstadt_Prio1-4.xodr", "src/main/resources/2019-11-29_SAVe_Ingolstadt_Prio1-4");
+            MainCLI mainCLI = new MainCLI("src/main/resources/2019-11-29_SAVe_Ingolstadt_Prio1-4.xodr",
+                    "src/main/resources/2019-11-29_SAVe_Ingolstadt_Prio1-4_3");
             mainCLI.doMain();
         } catch (Exception e) {
             e.printStackTrace();
@@ -83,7 +84,8 @@ public class MainCLI {
 //        converters.add(new GeoJsonConverter(GeoJsonConverter::convertRoads, outputFile));
         if (outputFile.exists() || outputFile.mkdir()) {
             System.out.println("Writing Output in: " + outputFile.getAbsolutePath());
-            converters.add(new GeoJsonConverter(GeoJsonConverter::convertReferenceLine, new File(outputFile, "refLine.json")));
+            converters.add(new GeoJsonConverter(GeoJsonConverter::convertReferenceLine,
+                    new File(outputFile, "refLine.json")));
             converters.add(new GeoJsonConverter(GeoJsonConverter::convertLanes, new File(outputFile, "lanes.json")));
 //            converters.add(new GeoJsonConverter(GeoJsonConverter::convertObjects, new File(outputFile, "objects.json")));
             // TODO: converters.add(new CityGMLConverter(CityGMLConverter::convertRoads));
@@ -97,7 +99,6 @@ public class MainCLI {
         } else {
             System.out.println("Couldn't create output directory: " + outputFile.getAbsolutePath());
         }
-
     }
 
     private void buildAreaParallel() {
