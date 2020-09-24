@@ -50,7 +50,6 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
         try {
             sourceCRS = factory.createCoordinateReferenceSystem("EPSG:25832");
             targetCRS = factory.createCoordinateReferenceSystem("EPSG:4326");
-
             SimpleFeatureTypeBuilder featureTypeBuilder = new SimpleFeatureTypeBuilder();
             featureTypeBuilder.setName("FEATURE_TYPE");
             featureTypeBuilder.setCRS(DefaultGeographicCRS.WGS84);
@@ -59,7 +58,6 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
             featureTypeBuilder.setDefaultGeometry("GEOMETRY");
             SimpleFeatureType fType = featureTypeBuilder.buildFeatureType();
             SimpleFeatureBuilder featureBuilder = new SimpleFeatureBuilder(fType);
-
             for (Road road : odr.getRoads()) {
                 road.getLanes().getLaneSections().values().forEach(ls -> {
                     ArrayList<Geometry> lines = ls.getCenterLane().getGmlGeometries();
@@ -79,8 +77,6 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
                         geojson.getFeatures().add(roadFeature);
                     }
                 });
-
-
             }
         } catch (FactoryException e) {
             e.printStackTrace();
@@ -102,7 +98,6 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
         try {
             sourceCRS = factory.createCoordinateReferenceSystem(odr.getHeader().getGeoReference().getEpsg());
             targetCRS = factory.createCoordinateReferenceSystem("EPSG:4326");
-
             SimpleFeatureTypeBuilder featureTypeBuilder = new SimpleFeatureTypeBuilder();
             featureTypeBuilder.setName("FEATURE_TYPE");
             featureTypeBuilder.setCRS(DefaultGeographicCRS.WGS84);
@@ -112,7 +107,6 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
             SimpleFeatureType fType = featureTypeBuilder.buildFeatureType();
             SimpleFeatureBuilder featureBuilder = new SimpleFeatureBuilder(fType);
             GeometryFactory geomFactory = new GeometryFactory();
-
             for (Road road : odr.getRoads()) {
                 ArrayList<Geometry> polygons = road.getGmlGeometries();
                 polygons.removeIf(g -> !(g instanceof Polygon));
@@ -144,7 +138,6 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
         try {
             sourceCRS = factory.createCoordinateReferenceSystem("EPSG:25832");
             targetCRS = factory.createCoordinateReferenceSystem("EPSG:4326");
-
             SimpleFeatureTypeBuilder featureTypeBuilder = new SimpleFeatureTypeBuilder();
             featureTypeBuilder.setName("FEATURE_TYPE");
             featureTypeBuilder.setCRS(DefaultGeographicCRS.WGS84);
@@ -156,7 +149,6 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
             SimpleFeatureType fType = featureTypeBuilder.buildFeatureType();
             SimpleFeatureBuilder featureBuilder = new SimpleFeatureBuilder(fType);
             GeometryFactory geomFactory = new GeometryFactory();
-
             for (Road road : odr.getRoads()) {
                 for (Map.Entry<Double, LaneSection> e : road.getLanes().getLaneSections().entrySet()) {
                     Double s = e.getKey();
@@ -184,6 +176,42 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
         return geojson;
     }
 
+    public static GeoJsonFormat convertLaneSections(OpenDRIVE odr) {
+        GeoJsonFormat geojson = new GeoJsonFormat();
+        CoordinateReferenceSystem sourceCRS;
+        CoordinateReferenceSystem targetCRS;
+        CRSAuthorityFactory factory = CRS.getAuthorityFactory(true);
+        try {
+            sourceCRS = factory.createCoordinateReferenceSystem("EPSG:25832");
+            targetCRS = factory.createCoordinateReferenceSystem("EPSG:4326");
+            SimpleFeatureTypeBuilder featureTypeBuilder = new SimpleFeatureTypeBuilder();
+            featureTypeBuilder.setName("FEATURE_TYPE");
+            featureTypeBuilder.setCRS(DefaultGeographicCRS.WGS84);
+            featureTypeBuilder.add("GEOMETRY", MultiPolygon.class); //TODO: change geometry type ???
+            featureTypeBuilder.add("RoadId", String.class);
+            featureTypeBuilder.add("LaneSection", Double.class);
+            featureTypeBuilder.add("LaneId", String.class);
+            featureTypeBuilder.setDefaultGeometry("GEOMETRY");
+            SimpleFeatureType fType = featureTypeBuilder.buildFeatureType();
+            SimpleFeatureBuilder featureBuilder = new SimpleFeatureBuilder(fType);
+            for (Road road : odr.getRoads()) {
+                for (Map.Entry<Double, LaneSection> e : road.getLanes().getLaneSections().entrySet()) {
+                    LaneSection laneSection = e.getValue();
+                    ArrayList<Geometry> polygons = laneSection.getGmlGeometries();
+                    polygons = Transformation.crsTransform(polygons, sourceCRS, targetCRS);
+                    for (Geometry mp : polygons) {
+                        featureBuilder.add(mp);
+                        SimpleFeature laneFeature = featureBuilder.buildFeature(UUID.randomUUID().toString());
+                        geojson.getFeatures().add(laneFeature);
+                    }
+                }
+            }
+        } catch (FactoryException | TransformException e) {
+            e.printStackTrace();
+        }
+        return geojson;
+    }
+
     // TODO move to utils?
     public static TreeMap<Integer, Lane> getLanes(LaneSection ls) {
         TreeMap<Integer, Lane> lanes = new TreeMap<>();
@@ -200,7 +228,6 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
         try {
             sourceCRS = factory.createCoordinateReferenceSystem(odr.getHeader().getGeoReference().getEpsg());
             targetCRS = factory.createCoordinateReferenceSystem("EPSG:4326");
-
             SimpleFeatureTypeBuilder featureTypeBuilder = new SimpleFeatureTypeBuilder();
             featureTypeBuilder.setName("FEATURE_TYPE");
             featureTypeBuilder.setCRS(DefaultGeographicCRS.WGS84);
@@ -213,7 +240,6 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
             SimpleFeatureType fType = featureTypeBuilder.buildFeatureType();
             SimpleFeatureBuilder featureBuilder = new SimpleFeatureBuilder(fType);
             GeometryFactory geomFactory = new GeometryFactory();
-
             for (Road road : odr.getRoads()) {
                 for (AbstractObject obj : road.getObjects()) {
                     ArrayList<Geometry> polygons = obj.getGmlGeometries();
@@ -242,7 +268,6 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
         }
         return geojson;
     }
-
 
     @Override
     public void write(GeoJsonFormat format) throws IOException {

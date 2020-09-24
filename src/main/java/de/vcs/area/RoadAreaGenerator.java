@@ -2,21 +2,21 @@ package de.vcs.area;
 
 import de.vcs.area.odrgeometryfactory.ODRGeometryFactory;
 import de.vcs.constants.JTSConstants;
-import de.vcs.datatypes.LaneParameter;
 import de.vcs.datatypes.LaneSectionParameters;
+import de.vcs.datatypes.LaneSectionPolygon;
 import de.vcs.model.odr.geometry.AbstractODRGeometry;
 import de.vcs.model.odr.geometry.Polynom;
+import de.vcs.model.odr.lane.Lane;
 import de.vcs.model.odr.lane.LaneSection;
 import de.vcs.model.odr.road.Road;
 import de.vcs.utils.geometry.Discretisation;
 import de.vcs.utils.math.PolynomHelper;
 import de.vcs.utils.transformation.PointFactory;
-import org.locationtech.jts.geom.Point;
-import org.locationtech.jts.geom.Polygon;
+import org.apache.commons.lang3.ArrayUtils;
+import org.locationtech.jts.geom.*;
+import org.locationtech.jts.operation.union.CascadedPolygonUnion;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.NoSuchElementException;
+import java.util.*;
 
 public class RoadAreaGenerator extends AbstractAreaGenerator implements AreaGenerator {
 
@@ -60,6 +60,8 @@ public class RoadAreaGenerator extends AbstractAreaGenerator implements AreaGene
                 //---- calc line, polygons
                 createCenterLine(ls, lsp);
                 createLanePolygons(ls, lsp);
+                createLaneSectionSemanticPolygons(ls);
+                System.out.println("Max");
             }
         });
     }
@@ -163,6 +165,45 @@ public class RoadAreaGenerator extends AbstractAreaGenerator implements AreaGene
                 }
             } catch (NullPointerException e) {
             }
+        }
+    }
+
+    private void createLaneSectionSemanticPolygons(LaneSection ls) {
+        TreeMap<String, ArrayList<MultiPolygon>> laneSectionPolygons = new TreeMap<>();
+        ls.getLeftLanes().entrySet().stream().forEach(l -> {
+            Lane lane = l.getValue();
+            Polygon geom = (Polygon) lane.getGmlGeometries().get(0);
+            LaneSectionPolygon poly =
+                    new LaneSectionPolygon(ArrayUtils.toArray(geom), new GeometryFactory());
+            poly.setLaneType(lane.getType());
+            putLSPolygons(lane.getType(), poly, laneSectionPolygons);
+        });
+        ls.getRightLanes().entrySet().stream().forEach(l -> {
+            Lane lane = l.getValue();
+            Polygon geom = (Polygon) lane.getGmlGeometries().get(0);
+            LaneSectionPolygon poly =
+                    new LaneSectionPolygon(ArrayUtils.toArray(geom), new GeometryFactory());
+            poly.setLaneType(lane.getType());
+            putLSPolygons(lane.getType(), poly, laneSectionPolygons);
+        });
+        laneSectionPolygons.entrySet().stream().forEach(l -> {
+            ls.getGmlGeometries().add(CascadedPolygonUnion.union(l.getValue()));
+        });
+    }
+
+    /**
+     * Put Polygon to LaneSectionPolygon Treemap.
+     *
+     * @param key
+     * @param poly
+     * @param laneSectionPolygons
+     */
+    private void putLSPolygons(String key, LaneSectionPolygon
+            poly, TreeMap<String, ArrayList<MultiPolygon>> laneSectionPolygons) {
+        if (laneSectionPolygons.get(key) == null) {
+            laneSectionPolygons.put(key, new ArrayList<MultiPolygon>(Arrays.asList(poly)));
+        } else {
+            laneSectionPolygons.get(key).add(poly);
         }
     }
 }

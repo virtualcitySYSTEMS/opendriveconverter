@@ -42,8 +42,8 @@ public class MainCLI {
 
     public static void main(String[] args) {
         try {
-            MainCLI mainCLI = new MainCLI("src/main/resources/2019-11-29_SAVe_Ingolstadt_Prio1-4.xodr",
-                    "src/main/resources/2019-11-29_SAVe_Ingolstadt_Prio1-4_3");
+            MainCLI mainCLI = new MainCLI("src/main/resources/2020-06-19_SAVe_Ingolstadt_Prio4.xodr",
+                    "src/main/resources/2020-06-19_SAVe_Ingolstadt_Prio4");
             mainCLI.doMain();
         } catch (Exception e) {
             e.printStackTrace();
@@ -87,7 +87,10 @@ public class MainCLI {
             converters.add(new GeoJsonConverter(GeoJsonConverter::convertReferenceLine,
                     new File(outputFile, "refLine.json")));
             converters.add(new GeoJsonConverter(GeoJsonConverter::convertLanes, new File(outputFile, "lanes.json")));
-//            converters.add(new GeoJsonConverter(GeoJsonConverter::convertObjects, new File(outputFile, "objects.json")));
+            converters
+                    .add(new GeoJsonConverter(GeoJsonConverter::convertObjects, new File(outputFile, "objects.json")));
+            converters.add(new GeoJsonConverter(GeoJsonConverter::convertLaneSections,
+                    new File(outputFile, "laneSections.json")));
             // TODO: converters.add(new CityGMLConverter(CityGMLConverter::convertRoads));
             converters.forEach(c -> {
                 try {
@@ -105,7 +108,7 @@ public class MainCLI {
         areaWorkerPool.prestartCoreWorkers();
         odr.getRoads().forEach(o -> {
             areaWorkerPool.addWork(new RoadAreaGenerator(o));
-            //areaWorkerPool.addWork(new ObjectAreaGenerator(o));
+            areaWorkerPool.addWork(new ObjectAreaGenerator(o));
         });
         try {
             areaWorkerPool.shutdownAndWait();
