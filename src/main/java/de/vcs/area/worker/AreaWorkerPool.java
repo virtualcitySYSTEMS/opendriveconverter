@@ -1,6 +1,6 @@
 package de.vcs.area.worker;
 
-import de.vcs.area.AreaGenerator;
+import de.vcs.area.generator.AreaGenerator;
 import org.citydb.concurrent.PoolSizeAdaptationStrategy;
 import org.citydb.concurrent.WorkerFactory;
 import org.citydb.concurrent.WorkerPool;

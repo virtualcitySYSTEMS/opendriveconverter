@@ -1,7 +1,4 @@
-package de.vcs.area;
-
-import de.vcs.datatypes.TestContainer;
-import de.vcs.model.odr.core.OpenDRIVE;
+package de.vcs.area.generator;
 
 public class SignalAreaGenerator extends AbstractAreaGenerator implements AreaGenerator {
 

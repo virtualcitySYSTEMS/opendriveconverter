@@ -1,4 +1,4 @@
-package de.vcs.area;
+package de.vcs.area.generator;
 
 import de.vcs.model.odr.geometry.AbstractODRGeometry;
 import de.vcs.model.odr.geometry.STHPosition;
@@ -16,7 +16,7 @@ import org.locationtech.jts.geom.*;
 import java.util.ArrayList;
 import java.util.Map;
 
-public class ObjectAreaGenerator extends AbstractAreaGenerator implements AreaGenerator {
+public class ObjectAreaGenerator extends AbstractAreaGenerator {
 
     Road road;
     ArrayList<Double> sRunner;

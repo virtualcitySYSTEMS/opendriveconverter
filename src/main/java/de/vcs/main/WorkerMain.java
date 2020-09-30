@@ -1,7 +1,5 @@
 package de.vcs.main;
 
-import de.vcs.area.LaneAreaGenerator;
-import de.vcs.area.RoadAreaGenerator;
 import de.vcs.area.worker.AreaWorkerFactory;
 import de.vcs.area.worker.AreaWorkerPool;
 import de.vcs.datatypes.TestContainer;

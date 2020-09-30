@@ -1,10 +1,9 @@
 package de.vcs.main;
 
-import de.vcs.area.ObjectAreaGenerator;
-import de.vcs.area.RoadAreaGenerator;
+import de.vcs.area.generator.ObjectAreaGenerator;
+import de.vcs.area.generator.RoadAreaGenerator;
 import de.vcs.area.worker.AreaWorkerFactory;
 import de.vcs.area.worker.AreaWorkerPool;
-import de.vcs.converter.AbstractFormat;
 import de.vcs.converter.FormatConverter;
 import de.vcs.converter.GeoJsonConverter;
 import de.vcs.model.odr.core.OpenDRIVE;
@@ -18,8 +17,7 @@ import org.xmlobjects.stream.XMLReaderFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class MainCLI {
 
@@ -55,7 +53,8 @@ public class MainCLI {
         initializeODRFactory();
         parseODRFile(odrFile);
         initializeAreaWorkerFactory();
-        buildAreaParallel();
+        generateAreasParallel();
+        processAreasParallel();
         writeODRFile(odr);
         printGML();
     }
@@ -63,12 +62,6 @@ public class MainCLI {
     private void initializeODRFactory() throws XMLObjectsException, XMLReadException {
         xmlObjects = XMLObjects.newInstance();
         xmlReaderFactory = XMLReaderFactory.newInstance(xmlObjects);
-    }
-
-    private void initializeAreaWorkerFactory() {
-        areaWorkerFactory = new AreaWorkerFactory();
-        areaWorkerPool = new AreaWorkerPool(poolsizeMin, poolsizeMax,
-                areaWorkerFactory, queueSize);
     }
 
     private void parseODRFile(File file) throws XMLReadException, ObjectBuildException {
@@ -79,18 +72,45 @@ public class MainCLI {
         }
     }
 
+    private void initializeAreaWorkerFactory() {
+        areaWorkerFactory = new AreaWorkerFactory();
+        areaWorkerPool = new AreaWorkerPool(poolsizeMin, poolsizeMax,
+                areaWorkerFactory, queueSize);
+    }
+
+    private void generateAreasParallel() {
+        areaWorkerPool.prestartCoreWorkers();
+        odr.getRoads().forEach(o -> {
+            areaWorkerPool.addWork(new RoadAreaGenerator(o));
+            areaWorkerPool.addWork(new ObjectAreaGenerator(o));
+        });
+        try {
+            areaWorkerPool.shutdownAndWait();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void processAreasParallel() {
+        // TODO worker, can we do this parallel? or other concept instead?
+        // new JunctionAreaProcessor(odr.getRoads(), odr.getJunctions());
+    }
+
     private void writeODRFile(OpenDRIVE odr) {
         List<FormatConverter> converters = new ArrayList<>();
-//        converters.add(new GeoJsonConverter(GeoJsonConverter::convertRoads, outputFile));
         if (outputFile.exists() || outputFile.mkdir()) {
             System.out.println("Writing Output in: " + outputFile.getAbsolutePath());
             converters.add(new GeoJsonConverter(GeoJsonConverter::convertReferenceLine,
                     new File(outputFile, "refLine.json")));
+            converters.add(new GeoJsonConverter(GeoJsonConverter::convertRoads,
+                    new File(outputFile, "roads.json")));
             converters.add(new GeoJsonConverter(GeoJsonConverter::convertLanes, new File(outputFile, "lanes.json")));
             converters
                     .add(new GeoJsonConverter(GeoJsonConverter::convertObjects, new File(outputFile, "objects.json")));
-            converters.add(new GeoJsonConverter(GeoJsonConverter::convertLaneSections,
-                    new File(outputFile, "laneSections.json")));
+//            converters.add(new GeoJsonConverter(GeoJsonConverter::convertLaneSections,
+//                    new File(outputFile, "laneSections.json")));
+            converters.add(new GeoJsonConverter(GeoJsonConverter::convertJunctions,
+                    new File(outputFile, "junctions.json")));
             // TODO: converters.add(new CityGMLConverter(CityGMLConverter::convertRoads));
             converters.forEach(c -> {
                 try {
@@ -101,19 +121,6 @@ public class MainCLI {
             });
         } else {
             System.out.println("Couldn't create output directory: " + outputFile.getAbsolutePath());
-        }
-    }
-
-    private void buildAreaParallel() {
-        areaWorkerPool.prestartCoreWorkers();
-        odr.getRoads().forEach(o -> {
-            areaWorkerPool.addWork(new RoadAreaGenerator(o));
-            areaWorkerPool.addWork(new ObjectAreaGenerator(o));
-        });
-        try {
-            areaWorkerPool.shutdownAndWait();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
         }
     }
 

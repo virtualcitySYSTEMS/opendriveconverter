@@ -1,4 +1,4 @@
-package de.vcs.area;
+package de.vcs.area.generator;
 
 public interface AreaGenerator {
 
