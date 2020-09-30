@@ -1,5 +1,6 @@
 package de.vcs.converter;
 
+import de.vcs.datatypes.LaneSectionPolygon;
 import de.vcs.model.odr.core.OpenDRIVE;
 import de.vcs.model.odr.lane.Lane;
 import de.vcs.model.odr.lane.LaneSection;
@@ -15,6 +16,7 @@ import org.geotools.geojson.geom.GeometryJSON;
 import org.geotools.referencing.CRS;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.locationtech.jts.geom.*;
+import org.locationtech.jts.operation.union.CascadedPolygonUnion;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.referencing.FactoryException;
@@ -24,10 +26,7 @@ import org.opengis.referencing.operation.TransformException;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.Function;
 
 public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
@@ -145,6 +144,7 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
             featureTypeBuilder.add("RoadId", String.class);
             featureTypeBuilder.add("LaneSection", Double.class);
             featureTypeBuilder.add("LaneId", String.class);
+            featureTypeBuilder.add("LaneType", String.class);
             featureTypeBuilder.setDefaultGeometry("GEOMETRY");
             SimpleFeatureType fType = featureTypeBuilder.buildFeatureType();
             SimpleFeatureBuilder featureBuilder = new SimpleFeatureBuilder(fType);
@@ -156,17 +156,23 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
                     for (Map.Entry<Integer, Lane> entry : getLanes(laneSection).entrySet()) {
                         Integer laneId = entry.getKey();
                         Lane lane = entry.getValue();
-                        ArrayList<Geometry> polygons = lane.getGmlGeometries();
-                        polygons.removeIf(g -> !(g instanceof Polygon));
-                        polygons = Transformation.crsTransform(polygons, sourceCRS, targetCRS);
-                        Polygon[] polygonArray = new Polygon[polygons.size()];
-                        MultiPolygon multiPolygon = geomFactory.createMultiPolygon(polygons.toArray(polygonArray));
-                        featureBuilder.add(multiPolygon);
-                        SimpleFeature laneFeature = featureBuilder.buildFeature(UUID.randomUUID().toString());
-                        laneFeature.setAttribute("RoadId", road.getId());
-                        laneFeature.setAttribute("LaneSection", s);
-                        laneFeature.setAttribute("LaneId", laneId);
-                        geojson.getFeatures().add(laneFeature);
+                        if (!road.getJunction().equals("-1") && lane.getType().equals("driving")) {
+                            break;
+                        }
+                        if (lane.getType().equals("driving")) {
+                            ArrayList<Geometry> polygons = lane.getGmlGeometries();
+//                        polygons.removeIf(g -> !(g instanceof Polygon));
+                            polygons = Transformation.crsTransform(polygons, sourceCRS, targetCRS);
+                            Polygon[] polygonArray = new Polygon[polygons.size()];
+                            MultiPolygon multiPolygon = geomFactory.createMultiPolygon(polygons.toArray(polygonArray));
+                            featureBuilder.add(multiPolygon);
+                            SimpleFeature laneFeature = featureBuilder.buildFeature(UUID.randomUUID().toString());
+                            laneFeature.setAttribute("RoadId", road.getId());
+                            laneFeature.setAttribute("LaneSection", s);
+                            laneFeature.setAttribute("LaneId", laneId);
+                            laneFeature.setAttribute("LaneType", lane.getType());
+                            geojson.getFeatures().add(laneFeature);
+                        }
                     }
                 }
             }
@@ -190,7 +196,7 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
             featureTypeBuilder.add("GEOMETRY", MultiPolygon.class); //TODO: change geometry type ???
             featureTypeBuilder.add("RoadId", String.class);
             featureTypeBuilder.add("LaneSection", Double.class);
-            featureTypeBuilder.add("LaneId", String.class);
+            featureTypeBuilder.add("LaneType", String.class);
             featureTypeBuilder.setDefaultGeometry("GEOMETRY");
             SimpleFeatureType fType = featureTypeBuilder.buildFeatureType();
             SimpleFeatureBuilder featureBuilder = new SimpleFeatureBuilder(fType);
@@ -202,6 +208,12 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
                     for (Geometry mp : polygons) {
                         featureBuilder.add(mp);
                         SimpleFeature laneFeature = featureBuilder.buildFeature(UUID.randomUUID().toString());
+                        laneFeature.setAttribute("RoadId", road.getId());
+                        laneFeature.setAttribute("LaneSection", laneSection.getLinearReference().getS());
+                        if (mp.getUserData() instanceof HashMap) {
+                            String laneType = ((HashMap<String, String>) mp.getUserData()).get("laneType");
+                            laneFeature.setAttribute("LaneType", laneType);
+                        }
                         geojson.getFeatures().add(laneFeature);
                     }
                 }
@@ -210,6 +222,67 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
             e.printStackTrace();
         }
         return geojson;
+    }
+
+    public static GeoJsonFormat convertJunctions(OpenDRIVE odr) {
+        HashMap<String, ArrayList<Geometry>> junctionMap = new HashMap<>();
+
+        GeoJsonFormat geojson = new GeoJsonFormat();
+        CoordinateReferenceSystem sourceCRS;
+        CoordinateReferenceSystem targetCRS;
+        CRSAuthorityFactory factory = CRS.getAuthorityFactory(true);
+        try {
+            sourceCRS = factory.createCoordinateReferenceSystem("EPSG:25832");
+            targetCRS = factory.createCoordinateReferenceSystem("EPSG:4326");
+            SimpleFeatureTypeBuilder featureTypeBuilder = new SimpleFeatureTypeBuilder();
+            featureTypeBuilder.setName("FEATURE_TYPE");
+            featureTypeBuilder.setCRS(DefaultGeographicCRS.WGS84);
+            featureTypeBuilder.add("GEOMETRY", MultiPolygon.class); //TODO: change geometry type ???
+            featureTypeBuilder.add("JunctionId", String.class);
+            featureTypeBuilder.setDefaultGeometry("GEOMETRY");
+            SimpleFeatureType fType = featureTypeBuilder.buildFeatureType();
+            SimpleFeatureBuilder featureBuilder = new SimpleFeatureBuilder(fType);
+            GeometryFactory geomFactory = new GeometryFactory();
+            for (Road road : odr.getRoads()) {
+                if (!road.getJunction().equals("-1")) {
+                    for (Map.Entry<Double, LaneSection> e : road.getLanes().getLaneSections().entrySet()) {
+                        Double s = e.getKey();
+                        LaneSection laneSection = e.getValue();
+                        for (Map.Entry<Integer, Lane> entry : getLanes(laneSection).entrySet()) {
+                            Integer laneId = entry.getKey();
+                            Lane lane = entry.getValue();
+                            if (lane.getType().equals("driving")) {
+                                ArrayList<Geometry> geometries = lane.getGmlGeometries();
+                                putConnectingRoads(road.getJunction(), geometries, junctionMap);
+                            }
+                        }
+                    }
+                }
+
+            }
+            for (Map.Entry<String, ArrayList<Geometry>> entry : junctionMap.entrySet()) {
+                String key = entry.getKey();
+                ArrayList<Geometry> polygons = entry.getValue();
+                polygons.removeIf(g -> !(g instanceof Polygon));
+                polygons = Transformation.crsTransform(polygons, sourceCRS, targetCRS);
+                featureBuilder.add(CascadedPolygonUnion.union(polygons));
+                SimpleFeature junctionFeature = featureBuilder.buildFeature(UUID.randomUUID().toString());
+                junctionFeature.setAttribute("JunctionId", key);
+                geojson.getFeatures().add(junctionFeature);
+            }
+        } catch (FactoryException | TransformException e) {
+            e.printStackTrace();
+        }
+        return geojson;
+    }
+
+
+    static private void putConnectingRoads(String key, ArrayList<Geometry> geometries, HashMap<String, ArrayList<Geometry>> junctionMap) {
+        if (junctionMap.get(key) == null) {
+            junctionMap.put(key, geometries);
+        } else {
+            junctionMap.get(key).addAll(geometries);
+        }
     }
 
     // TODO move to utils?
