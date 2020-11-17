@@ -99,18 +99,17 @@ public class MainCLI {
         List<FormatConverter> converters = new ArrayList<>();
         if (outputFile.exists() || outputFile.mkdir()) {
             System.out.println("Writing Output in: " + outputFile.getAbsolutePath());
-//            converters.add(new GeoJsonConverter(GeoJsonConverter::convertReferenceLine,
-//                    new File(outputFile, "refLine.json")));
-//            converters.add(new GeoJsonConverter(GeoJsonConverter::convertRoads,
-//                    new File(outputFile, "roads.json")));
+            converters.add(new GeoJsonConverter(GeoJsonConverter::convertReferenceLine,
+                    new File(outputFile, "refLine.json")));
+            converters.add(new GeoJsonConverter(GeoJsonConverter::convertRoads,
+                    new File(outputFile, "roads.json")));
             converters.add(new GeoJsonConverter(GeoJsonConverter::convertLanes, new File(outputFile, "lanes.json")));
-//            converters
-//                    .add(new GeoJsonConverter(GeoJsonConverter::convertObjects, new File(outputFile, "objects
-//                    .json")));
-////            converters.add(new GeoJsonConverter(GeoJsonConverter::convertLaneSections,
-////                    new File(outputFile, "laneSections.json")));
-//            converters.add(new GeoJsonConverter(GeoJsonConverter::convertJunctions,
-//                    new File(outputFile, "junctions.json")));
+            converters
+                    .add(new GeoJsonConverter(GeoJsonConverter::convertObjects, new File(outputFile, "objects.json")));
+            converters.add(new GeoJsonConverter(GeoJsonConverter::convertLaneSections,
+                    new File(outputFile, "laneSections.json")));
+            converters.add(new GeoJsonConverter(GeoJsonConverter::convertJunctions,
+                    new File(outputFile, "junctions.json")));
             // TODO: converters.add(new CityGMLConverter(CityGMLConverter::convertRoads));
             converters.forEach(c -> {
                 try {
