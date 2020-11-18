@@ -34,12 +34,12 @@ public class ObjectAreaGenerator extends AbstractAreaGenerator {
 
     private void apply2D() {
         for (AbstractObject obj : road.getObjects()) {
+            Point point = addPoint(obj);
             if (obj.getOutlines().size() > 0) {
                 addComplexOutline(obj);
             } else if (obj.getRepeat().size() > 0) {
                 addRepeatedOutline(obj);
             } else {
-                Point point = addPoint(obj);
                 addSimpleOutline(obj, point);
             }
         }
@@ -55,7 +55,9 @@ public class ObjectAreaGenerator extends AbstractAreaGenerator {
         STHPosition sth = obj.getLinearReference();
         AbstractODRGeometry geom = road.getPlanView().getOdrGeometries().floorEntry(sth.getS()).getValue();
         Point point = pointFactory.getODRGeometryHandler(geom.getClass()).sth2xyzPoint(geom, sth.getS(), sth.getT());
-        obj.getGmlGeometries().add(point);
+        double hdg = pointFactory.getODRGeometryHandler(geom.getClass()).calcHdg(geom, sth.getS());
+        obj.getIntertialTransform().setHdg(hdg);
+        //        obj.getGmlGeometries().add(point); // TODO decide whether to add this geom or not
         return point;
     }
 

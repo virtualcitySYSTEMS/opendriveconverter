@@ -29,6 +29,18 @@ public class ParamPolynomHelper {
     }
 
     /**
+     * calculates the local heading at a point p of the geometry
+     * scalar product of u vector [1 0] and tangent vector [t1 t2] = [-n1 n2] (with normal vector n)
+     * @param p  ODR geometry
+     * @param ds local s on geometry
+     * @return heading in radian
+     */
+    public static double calcLocalHdg(ParamPolynom p, double ds) {
+        Point nvpoint = calcNormalVector(p, ds);
+        return Math.acos(-nvpoint.getX());
+    }
+
+    /**
      * normal vector at position s
      *
      * @param p  ODR param poly geometry

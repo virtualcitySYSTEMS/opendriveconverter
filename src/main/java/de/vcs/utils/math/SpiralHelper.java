@@ -1,5 +1,6 @@
 package de.vcs.utils.math;
 
+import de.vcs.model.odr.geometry.ParamPolynom;
 import de.vcs.model.odr.geometry.Spiral;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
@@ -218,6 +219,19 @@ public final class SpiralHelper {
         }
         return new GeometryFactory().createPoint(
                 new Coordinate(uvpoint.getX() - offsetX, uvpoint.getY() + offsetY));
+    }
+
+    /**
+     * calculates the local heading at a point p of the geometry
+     * scalar product of u vector [1 0] and tangent vector [t1 t2] = [-n1 n2] (with normal vector n)
+     * @param spiral  ODR geometry
+     * @param ds local s on geometry
+     * @return heading in radian
+     */
+    public static double calcLocalHdg(Spiral spiral, double ds) {
+        double[] xyt = odrSpiral(ds,(spiral.getCurvEnd() - spiral.getCurvStart()) / spiral.getLength(), spiral.getCurvStart());
+        Point nvpoint = calcNormalVector(xyt[2]);
+        return Math.acos(-nvpoint.getX());
     }
 
     /**

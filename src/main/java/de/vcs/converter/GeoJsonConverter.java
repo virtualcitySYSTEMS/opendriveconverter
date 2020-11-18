@@ -127,7 +127,7 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
                         if (!road.getJunction().equals("-1") && lane.getType().equals("driving")) {
                             break;
                         }
-                        if (lane.getType().equals("driving")) {
+//                        if (lane.getType().equals("driving")) {
                             ArrayList<Geometry> geometries = lane.getGmlGeometries();
                             geometries = Transformation.crsTransform(geometries, sourceCRS, targetCRS);
                             geometries.stream().forEach(f -> {
@@ -137,7 +137,7 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
                                 feature.put("properties", properties);
                                 geojson.getFeatures().add(feature);
                             });
-                        }
+//                        }
                     }
                 }
             }
@@ -271,7 +271,11 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
                         JSONObject feature = createFeature(f);
                         JSONObject properties = getProperties(obj);
                         properties.put("roadId", road.getId());
-                        //TODO add heading & zOffset
+                        properties.put("heading", obj.getIntertialTransform().getHdg());
+                        properties.put("zOffset", obj.getIntertialTransform().getzOffset());
+                        if (obj.getIntertialTransform().getHdg() > 0.0) {
+
+                        }
                         feature.put("properties", properties);
                         geojson.getFeatures().add(feature);
                     });

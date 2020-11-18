@@ -27,6 +27,7 @@ public class FormatConverterTest {
         Road road = new Road();
         road.setId("test123");
         road.setName("testRoad");
+        road.setJunction("-1");
         GeometryFactory geometryFactory = new GeometryFactory();
         Coordinate[] coordinates = new Coordinate[]{
                 new Coordinate( 678190.07, 5405309.46),
@@ -41,6 +42,7 @@ public class FormatConverterTest {
         road.getGmlGeometries().add(line);
         Lane lane = new Lane();
         lane.setId(1);
+        lane.setType("driving");
         lane.getGmlGeometries().add(polygon);
         LaneSection laneSection = new LaneSection();
         laneSection.getLeftLanes().put(1, lane);
@@ -59,14 +61,14 @@ public class FormatConverterTest {
 
         // output
         File testRoadRefLine = new File("src/main/resources/testRoadRefLine.json");
-        File testRoadPolygon = new File("src/main/resources/testRoadPolygon.json");
+//        File testRoadPolygon = new File("src/main/resources/testRoadPolygon.json");
         File testLanePolygon = new File("src/main/resources/testLanePolygon.json");
         File testObjectsPolygon = new File("src/main/resources/testObjectsPolygon.json");
 
 
         List<FormatConverter> converters = new ArrayList<>();
         converters.add(new GeoJsonConverter(GeoJsonConverter::convertReferenceLine, testRoadRefLine));
-        converters.add(new GeoJsonConverter(GeoJsonConverter::convertRoads, testRoadPolygon));
+//        converters.add(new GeoJsonConverter(GeoJsonConverter::convertRoads, testRoadPolygon));
         converters.add(new GeoJsonConverter(GeoJsonConverter::convertLanes, testLanePolygon));
         converters.add(new GeoJsonConverter(GeoJsonConverter::convertObjects, testObjectsPolygon));
         converters.forEach(c -> {
@@ -79,7 +81,7 @@ public class FormatConverterTest {
 
         // test file exists
         Assert.assertTrue(testRoadRefLine.exists());
-        Assert.assertTrue(testRoadPolygon.exists());
+//        Assert.assertTrue(testRoadPolygon.exists());
         Assert.assertTrue(testLanePolygon.exists());
         Assert.assertTrue(testObjectsPolygon.exists());
     }
