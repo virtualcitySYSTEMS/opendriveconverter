@@ -19,4 +19,15 @@ public class ArcHelper {
         double theta = ds * (1 / r) + sign * Math.PI / 2;
         return new GeometryFactory().createPoint(new Coordinate(- sign * (r + t) * Math.cos(theta), (r + t) * Math.sin(theta) - sign * r));
     }
+
+    /**
+     * calculates the local heading at a point p of the geometry
+     * @param arc  ODR geometry
+     * @param ds local s on geometry
+     * @return heading in radian
+     */
+    public static double calcLocalHdg(Arc arc, double ds) {
+        double r = Math.abs(1 / arc.getCurvature());
+        return ds * (1 / r);
+    }
 }

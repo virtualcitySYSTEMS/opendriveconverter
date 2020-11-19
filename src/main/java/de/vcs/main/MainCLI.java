@@ -2,6 +2,7 @@ package de.vcs.main;
 
 import de.vcs.area.generator.ObjectAreaGenerator;
 import de.vcs.area.generator.RoadAreaGenerator;
+import de.vcs.area.generator.SignalAreaGenerator;
 import de.vcs.area.worker.AreaWorkerFactory;
 import de.vcs.area.worker.AreaWorkerPool;
 import de.vcs.converter.FormatConverter;
@@ -74,8 +75,7 @@ public class MainCLI {
 
     private void initializeAreaWorkerFactory() {
         areaWorkerFactory = new AreaWorkerFactory();
-        areaWorkerPool = new AreaWorkerPool(poolsizeMin, poolsizeMax,
-                areaWorkerFactory, queueSize);
+        areaWorkerPool = new AreaWorkerPool(poolsizeMin, poolsizeMax, areaWorkerFactory, queueSize);
     }
 
     private void generateAreasParallel() {
@@ -83,6 +83,7 @@ public class MainCLI {
         odr.getRoads().forEach(o -> {
             areaWorkerPool.addWork(new RoadAreaGenerator(o));
             areaWorkerPool.addWork(new ObjectAreaGenerator(o));
+            areaWorkerPool.addWork(new SignalAreaGenerator(o));
         });
         try {
             areaWorkerPool.shutdownAndWait();
@@ -107,8 +108,10 @@ public class MainCLI {
             converters.add(new GeoJsonConverter(GeoJsonConverter::convertLanes, new File(outputFile, "lanes.json")));
             converters
                     .add(new GeoJsonConverter(GeoJsonConverter::convertObjects, new File(outputFile, "objects.json")));
-//            converters.add(new GeoJsonConverter(GeoJsonConverter::convertLaneSections,
-//                    new File(outputFile, "laneSections.json")));
+            converters
+                    .add(new GeoJsonConverter(GeoJsonConverter::convertSignals, new File(outputFile, "signals.json")));
+            converters.add(new GeoJsonConverter(GeoJsonConverter::convertLaneSections,
+                    new File(outputFile, "laneSections.json")));
             converters.add(new GeoJsonConverter(GeoJsonConverter::convertJunctions,
                     new File(outputFile, "junctions.json")));
             // TODO: converters.add(new CityGMLConverter(CityGMLConverter::convertRoads));

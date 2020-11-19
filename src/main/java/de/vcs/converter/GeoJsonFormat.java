@@ -1,5 +1,7 @@
 package de.vcs.converter;
 
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 import org.opengis.feature.simple.SimpleFeature;
 
 import java.util.ArrayList;
@@ -7,21 +9,20 @@ import java.util.List;
 
 public class GeoJsonFormat extends AbstractFormat {
 
-    private List<SimpleFeature> features = new ArrayList<SimpleFeature>();
+    private List<JSONObject> features = new ArrayList<>();
 
-    public GeoJsonFormat(List<SimpleFeature> features) {
+    public GeoJsonFormat(List<JSONObject> features) {
         this.features = features;
     }
 
     public GeoJsonFormat() {
-
     }
 
-    public List<SimpleFeature> getFeatures() {
+    public List<JSONObject> getFeatures() {
         return features;
     }
 
-    public void setFeatures(List<SimpleFeature> features) {
+    public void setFeatures(List<JSONObject> features) {
         this.features = features;
     }
 }

@@ -4,6 +4,7 @@ import de.vcs.model.odr.geometry.AbstractODRGeometry;
 import de.vcs.model.odr.geometry.Line;
 import de.vcs.utils.geometry.Transformation;
 import de.vcs.utils.math.LineHelper;
+import de.vcs.utils.math.ODRMath;
 import org.locationtech.jts.geom.Point;
 
 public class LineHandler implements ODRGeometryHandler {
@@ -20,5 +21,13 @@ public class LineHandler implements ODRGeometryHandler {
             return xyz;
         }
         return null;
+    }
+
+    @Override
+    public double calcHdg(AbstractODRGeometry geom, double s) {
+        if (geom.getClass().equals(Line.class)) {
+            return ODRMath.normalizeAngle(geom.getIntertialTransform().getHdg());
+        }
+        return 0.0;
     }
 }

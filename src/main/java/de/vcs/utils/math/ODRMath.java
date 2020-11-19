@@ -24,4 +24,8 @@ public class ODRMath {
         }
         return start + value * (end - start);
     }
+
+    public static double normalizeAngle(double angle) {
+        return angle - 2 * Math.PI * Math.floor((angle + Math.PI) / (2 * Math.PI));
+    }
 }

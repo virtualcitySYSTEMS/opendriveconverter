@@ -34,34 +34,35 @@ public class ObjectAreaGenerator extends AbstractAreaGenerator {
 
     private void apply2D() {
         for (AbstractObject obj : road.getObjects()) {
+            Point point = createPoint(obj);
             if (obj.getOutlines().size() > 0) {
                 addComplexOutline(obj);
             } else if (obj.getRepeat().size() > 0) {
                 addRepeatedOutline(obj);
             } else {
-                Point point = addPoint(obj);
                 addSimpleOutline(obj, point);
             }
         }
     }
 
     /**
-     * adds the objects position as a point geometry
-     *
+     * returns the objects position as a point geometry
+     * sets the inertial heading to the object
      * @param obj - OpenDRIVE object
      * @return point geometry
      */
-    private Point addPoint(AbstractObject obj) {
+    private Point createPoint(AbstractObject obj) {
         STHPosition sth = obj.getLinearReference();
         AbstractODRGeometry geom = road.getPlanView().getOdrGeometries().floorEntry(sth.getS()).getValue();
         Point point = pointFactory.getODRGeometryHandler(geom.getClass()).sth2xyzPoint(geom, sth.getS(), sth.getT());
-        obj.getGmlGeometries().add(point);
+        double hdg = pointFactory.getODRGeometryHandler(geom.getClass()).calcHdg(geom, sth.getS());
+        obj.getIntertialTransform().setHdg(hdg + obj.getStTransform().getHdg());
         return point;
     }
 
     /**
      * adds a simple 2D (!) outline created from radius or length and width
-     *
+     * if object has no outline at all, a point is added
      * @param obj   - OpenDRIVE object
      * @param point - objects position as a point geometry
      */
@@ -82,6 +83,8 @@ public class ObjectAreaGenerator extends AbstractAreaGenerator {
                     sth.getT() + obj.getWidth() / 2
             );
             obj.getGmlGeometries().add(OutlineCreator.createRectangularOutline(p1, p2));
+        } else {
+            obj.getGmlGeometries().add(point);
         }
     }
 

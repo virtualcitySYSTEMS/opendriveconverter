@@ -3,6 +3,7 @@ package de.vcs.utils.transformation;
 import de.vcs.model.odr.geometry.AbstractODRGeometry;
 import de.vcs.model.odr.geometry.ParamPolynom;
 import de.vcs.utils.geometry.Transformation;
+import de.vcs.utils.math.ODRMath;
 import de.vcs.utils.math.ParamPolynomHelper;
 import org.locationtech.jts.geom.Point;
 
@@ -20,5 +21,16 @@ public class ParamPolyHandler implements ODRGeometryHandler {
             return xyz;
         }
         return null;
+    }
+
+    @Override
+    public double calcHdg(AbstractODRGeometry geom, double s) {
+        if (geom.getClass().equals(ParamPolynom.class)) {
+            ParamPolynom ppoly = (ParamPolynom) geom;
+            double ds = s - ppoly.getLinearReference().getS();
+            double localHdg = ParamPolynomHelper.calcLocalHdg(ppoly, ds);
+            return ODRMath.normalizeAngle(ppoly.getIntertialTransform().getHdg() + localHdg);
+        }
+        return 0.0;
     }
 }

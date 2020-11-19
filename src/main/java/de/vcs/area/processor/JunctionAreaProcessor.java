@@ -4,12 +4,7 @@ import de.vcs.model.odr.junction.Junction;
 import de.vcs.model.odr.lane.Lane;
 import de.vcs.model.odr.lane.LaneSection;
 import de.vcs.model.odr.road.Road;
-import de.vcs.utils.geometry.Transformation;
-import org.apache.commons.lang3.ArrayUtils;
 import org.locationtech.jts.geom.Geometry;
-import org.locationtech.jts.geom.Polygon;
-import org.locationtech.jts.operation.union.CascadedPolygonUnion;
-import org.opengis.feature.simple.SimpleFeature;
 
 import java.util.*;
 
