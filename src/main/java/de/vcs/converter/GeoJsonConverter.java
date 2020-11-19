@@ -5,6 +5,7 @@ import de.vcs.model.odr.core.OpenDRIVE;
 import de.vcs.model.odr.lane.Lane;
 import de.vcs.model.odr.lane.LaneSection;
 import de.vcs.model.odr.object.*;
+import de.vcs.model.odr.signal.Signal;
 import de.vcs.model.odr.road.Road;
 import de.vcs.utils.geometry.Transformation;
 import org.apache.commons.lang3.ClassUtils;
@@ -273,9 +274,41 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
                         properties.put("roadId", road.getId());
                         properties.put("heading", obj.getIntertialTransform().getHdg());
                         properties.put("zOffset", obj.getIntertialTransform().getzOffset());
-                        if (obj.getIntertialTransform().getHdg() > 0.0) {
+                        feature.put("properties", properties);
+                        geojson.getFeatures().add(feature);
+                    });
+                }
+            }
+        } catch (FactoryException | TransformException e) {
+            e.printStackTrace();
+        }
+        return geojson;
+    }
 
-                        }
+    /**
+     * Creates a top level feature for each OpenDRIVE Signal Element
+     *
+     * @param odr - OpenDRIVE data
+     * @return GeoJSON feature list of object geometries
+     */
+    public static GeoJsonFormat convertSignals(OpenDRIVE odr) {
+        GeoJsonFormat geojson = new GeoJsonFormat();
+        CoordinateReferenceSystem sourceCRS;
+        CoordinateReferenceSystem targetCRS;
+        CRSAuthorityFactory factory = CRS.getAuthorityFactory(true);
+        try {
+            sourceCRS = factory.createCoordinateReferenceSystem(odr.getHeader().getGeoReference().getEpsg());
+            targetCRS = factory.createCoordinateReferenceSystem("EPSG:4326");
+            for (Road road : odr.getRoads()) {
+                for (Signal signal : road.getSignals().getSignals()) {
+                    ArrayList<Geometry> geometries = signal.getGmlGeometries();
+                    geometries = Transformation.crsTransform(geometries, sourceCRS, targetCRS);
+                    geometries.stream().forEach(f -> {
+                        JSONObject feature = createFeature(f);
+                        JSONObject properties = getProperties(signal);
+                        properties.put("roadId", road.getId());
+                        properties.put("heading", signal.getInertialTransform().getHdg());
+                        properties.put("zOffset", signal.getInertialTransform().getzOffset());
                         feature.put("properties", properties);
                         geojson.getFeatures().add(feature);
                     });
