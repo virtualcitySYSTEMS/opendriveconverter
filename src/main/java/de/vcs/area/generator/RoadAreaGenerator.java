@@ -9,6 +9,7 @@ import de.vcs.model.odr.lane.Lane;
 import de.vcs.model.odr.lane.LaneSection;
 import de.vcs.model.odr.road.Road;
 import de.vcs.utils.geometry.Discretisation;
+import de.vcs.utils.math.ElevationHelper;
 import de.vcs.utils.math.PolynomHelper;
 import de.vcs.utils.transformation.PointFactory;
 import org.locationtech.jts.geom.*;
@@ -66,6 +67,9 @@ public class RoadAreaGenerator extends AbstractAreaGenerator implements AreaGene
     private void fillCenterLine(double sLocal, double sStart, LaneSectionParameters lsp, LaneSection ls) {
         double sGlobal = sLocal + sStart;
         AbstractODRGeometry geom = road.getPlanView().getOdrGeometries().floorEntry(sGlobal).getValue();
+        Polynom elevation = (Polynom) road.getElevationProfile().getElevations().floorEntry(sGlobal).getValue();
+        Polynom superelvation = (Polynom) road.getLateralProfile().getSuperElevations().floorEntry(sGlobal).getValue();
+        // TODO shape
         double offset = 0.0;
         if (road.getLanes().getLaneOffsets().isEmpty()) {
             offset = 0.0;
@@ -94,8 +98,10 @@ public class RoadAreaGenerator extends AbstractAreaGenerator implements AreaGene
             double sPolyWidth = sLocal - poly.getStTransform().getsOffset();
             double width = PolynomHelper.calcPolynomValue(poly, sPolyWidth);
             currentRightWidth -= width;
+            double zOffset = 0.0; // ls.getRightLanes().floorEntry(i).getValue().getHeights().floorEntry(sLocal).getValue();
+            double h = ElevationHelper.getElevation(sGlobal, currentRightWidth, zOffset, elevation, superelvation); // TODO add lane height (outer)
             lsp.getLanes().get(i).add(pointFactory.getODRGeometryHandler(geom.getClass())
-                    .sth2xyzPoint(geom, sGlobal, currentRightWidth));
+                    .sth2xyzPoint(geom, sGlobal, currentRightWidth, h));
         }
         double currentLeftWidth = offset;
         for (int i = 1; i <= maxLaneID; i++) {
@@ -103,11 +109,14 @@ public class RoadAreaGenerator extends AbstractAreaGenerator implements AreaGene
             double sPolyWidth = sLocal - poly.getStTransform().getsOffset();
             double width = PolynomHelper.calcPolynomValue(poly, sPolyWidth);
             currentLeftWidth += width;
+            double zOffset = 0.0; // ls.getRightLanes().floorEntry(i).getValue().getHeights().floorEntry(sLocal).getValue();
+            double h = ElevationHelper.getElevation(sGlobal, currentLeftWidth, zOffset, elevation, superelvation); // TODO add lane height (outer)
             lsp.getLanes().get(i).add(pointFactory.getODRGeometryHandler(geom.getClass())
-                    .sth2xyzPoint(geom, sGlobal, currentLeftWidth));
+                    .sth2xyzPoint(geom, sGlobal, currentLeftWidth, h));
         }
+        double h = ElevationHelper.getElevation(sGlobal, 0.0, 0.0, elevation, superelvation);
         lsp.getLanes().get(0)
-                .add(pointFactory.getODRGeometryHandler(geom.getClass()).sth2xyzPoint(geom, sGlobal, offset));
+                .add(pointFactory.getODRGeometryHandler(geom.getClass()).sth2xyzPoint(geom, sGlobal, offset, h));
     }
 
     private void initLSPTreeMap(int minLaneID, int maxLaneID, LaneSectionParameters lsp) {
