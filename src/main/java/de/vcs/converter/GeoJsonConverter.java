@@ -344,6 +344,7 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
     private static JSONObject createFeature(Geometry geom) {
         JSONObject feature = new JSONObject();
         GeoJsonWriter geomWriter = new GeoJsonWriter();
+        geomWriter.setEncodeCRS(false);
         JSONParser parser = new JSONParser();
         try {
             JSONObject geomObject = (JSONObject) parser.parse(geomWriter.write(geom));
