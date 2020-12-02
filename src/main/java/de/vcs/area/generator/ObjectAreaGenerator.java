@@ -6,6 +6,7 @@ import de.vcs.model.odr.object.Outline;
 import de.vcs.model.odr.road.Road;
 import de.vcs.utils.geometry.Discretisation;
 import de.vcs.utils.geometry.OutlineCreator;
+import de.vcs.utils.log.ODRLogger;
 import de.vcs.utils.math.ElevationHelper;
 import de.vcs.utils.math.ODRMath;
 import de.vcs.utils.transformation.PointFactory;
@@ -55,7 +56,12 @@ public class ObjectAreaGenerator extends AbstractAreaGenerator {
         double t = obj.getLinearReference().getT();
         AbstractODRGeometry geom = road.getPlanView().getOdrGeometries().floorEntry(s).getValue();
         Polynom elevation = (Polynom) road.getElevationProfile().getElevations().floorEntry(s).getValue();
-        Polynom superelevation = (Polynom) road.getLateralProfile().getSuperElevations().floorEntry(s).getValue();
+        Polynom superelevation = null;
+        try {
+            superelevation = (Polynom) road.getLateralProfile().getSuperElevations().floorEntry(s).getValue();
+        } catch (Exception e) {
+            ODRLogger.getInstance().error("Found no superelevation for road with id " + road.getId());
+        }
         double h = ElevationHelper.getElevation(s, t, obj.getIntertialTransform().getzOffset(), elevation, superelevation);
         Point point = pointFactory.getODRGeometryHandler(geom.getClass()).sth2xyzPoint(geom, s, t, h);
         double hdg = pointFactory.getODRGeometryHandler(geom.getClass()).calcHdg(geom, s);
