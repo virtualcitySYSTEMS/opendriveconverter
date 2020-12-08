@@ -53,55 +53,13 @@ public class Transformation {
         }
         return transformedGeometries;
     }
-    //TODO delete
-/*
-    public static Point st2xyPoint(ParamPolynom ppoly, STHPosition sth) {
-        return Transformation.st2xyPoint(ppoly, sth.getS(), sth.getT());
-    }
 
-    //TODO this is tailored to Road. Could it be general?
-    public static Point st2xyPoint(Road road, STHPosition sth) {
-        return Transformation.st2xyPoint(road, sth.getS(), sth.getT());
+    public static Point translatePoint(Point p1, double dx, double dy, double dz) {
+        double x = p1.getCoordinate().getX() + dx;
+        double y = p1.getCoordinate().getY() + dy;
+        double z = p1.getCoordinate().getZ() + dz;
+        Coordinate coord = new Coordinate(x, y, z);
+        GeometryFactory gf = new GeometryFactory();
+        return gf.createPoint(coord);
     }
-
-    public static Point st2xyPoint(ParamPolynom ppoly, double s, double t) {
-        double ds = s - ppoly.getLinearReference().getS();
-        Point point = ParamPolynomHelper.calcUVPoint(ds, ppoly);
-        if (t != 0.0) {
-            Point normal = ParamPolynomHelper.calcNormalVector(ds, point, ppoly);
-            point = ParamPolynomHelper.calcUVPointPerpendicularToCurve(point, normal, t);
-        }
-        Point xyz = (Point) Transformation.transform(point, ppoly.getIntertialTransform().getHdg(),
-                ppoly.getInertialReference().getPos().getValue().get(0),
-                ppoly.getInertialReference().getPos().getValue().get(1));
-        return xyz;
-    }
-
-    //TODO this is tailored to Road. Could it be general?
-    public static Point st2xyPoint(Road road, double s, double t) {
-        ParamPolynom ppoly = (ParamPolynom) road.getPlanView().getOdrGeometries().floorEntry(s).getValue();
-        double ds = s - ppoly.getLinearReference().getS();
-        Point point = ParamPolynomHelper.calcUVPoint(ds, ppoly);
-        if (t != 0.0) {
-            Point normal = ParamPolynomHelper.calcNormalVector(ds, point, ppoly);
-            point = ParamPolynomHelper.calcUVPointPerpendicularToCurve(point, normal, t);
-        }
-        Point xyz = (Point) Transformation.transform(point, ppoly.getIntertialTransform().getHdg(),
-                ppoly.getInertialReference().getPos().getValue().get(0),
-                ppoly.getInertialReference().getPos().getValue().get(1));
-        return xyz;
-    }
-
-    //TODO this is tailored to Road. Could it be general?
-    public static Point sth2xyzPoint(Road road, STHPosition sth) {
-        return Transformation.sth2xyzPoint(road, sth.getS(), sth.getT(), sth.getH());
-    }
-
-    //TODO this is tailored to Road. Could it be general?
-    public static Point sth2xyzPoint(Road road, double s, double t, double h) {
-        Point point = st2xyPoint(road, s, t);
-        Polynom poly = (Polynom) road.getElevationProfile().getElevations().floorEntry(s).getValue();
-        double elevation = PolynomHelper.calcPolynomValue(s,poly);
-        return new GeometryFactory().createPoint(new Coordinate(point.getX(), point.getY(), elevation + h));
-    } */
 }

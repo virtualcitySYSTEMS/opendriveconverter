@@ -5,16 +5,18 @@ import de.vcs.constants.JTSConstants;
 import de.vcs.datatypes.LaneSectionParameters;
 import de.vcs.model.odr.geometry.AbstractODRGeometry;
 import de.vcs.model.odr.geometry.Polynom;
+import de.vcs.model.odr.lane.Height;
 import de.vcs.model.odr.lane.Lane;
 import de.vcs.model.odr.lane.LaneSection;
 import de.vcs.model.odr.road.Road;
+import de.vcs.utils.ODRHelper;
 import de.vcs.utils.geometry.Discretisation;
+import de.vcs.utils.geometry.Transformation;
 import de.vcs.utils.log.ODRLogger;
 import de.vcs.utils.math.ElevationHelper;
 import de.vcs.utils.math.PolynomHelper;
 import de.vcs.utils.transformation.PointFactory;
 import org.locationtech.jts.geom.*;
-import org.locationtech.jts.operation.union.CascadedPolygonUnion;
 
 import java.util.*;
 
@@ -23,6 +25,7 @@ public class RoadAreaGenerator extends AbstractAreaGenerator implements AreaGene
     Road road;
     ArrayList<LaneSectionParameters> laneSectionParameters;
     ArrayList<Double> sRunner;
+    double step = 0.2;
     PointFactory pointFactory;
 
     public RoadAreaGenerator(Road road) {
@@ -43,8 +46,7 @@ public class RoadAreaGenerator extends AbstractAreaGenerator implements AreaGene
                 sEnd = road.getLength();
             } else {
                 try {
-                    //TODO 0.01 change to little bit less than delta s
-                    sEnd = road.getLanes().getLaneSections().ceilingKey(key + 0.01);
+                    sEnd = road.getLanes().getLaneSections().ceilingKey(key + step / 10);
                 } catch (Exception e) {
                     sEnd = sStart;
                 }
@@ -52,20 +54,20 @@ public class RoadAreaGenerator extends AbstractAreaGenerator implements AreaGene
             if (sStart != sEnd) {
                 LaneSection ls = road.getLanes().getLaneSections().get(key);
                 LaneSectionParameters lsp = new LaneSectionParameters();
-                ArrayList<Double> sPositions = Discretisation.generateSRunner(0.2, sEnd - sStart);
+                ArrayList<Double> sPositions = Discretisation.generateSRunner(step, sEnd - sStart);
                 //---- calc points
                 sPositions.forEach(s -> {
-                    fillCenterLine(s, sStart, lsp, ls);
+                    createLaneGroundPoints(s, sStart, lsp, ls);
                 });
                 //---- calc line, polygons
                 createCenterLine(ls, lsp);
-                createLanePolygons(ls, lsp);
-//                createLaneSectionSemanticPolygons(ls);
+//                createLanePolygons(ls, lsp);
+                createLanePolygons3D(ls, lsp);
             }
         });
     }
 
-    private void fillCenterLine(double sLocal, double sStart, LaneSectionParameters lsp, LaneSection ls) {
+    private void createLaneGroundPoints(double sLocal, double sStart, LaneSectionParameters lsp, LaneSection ls) {
         double sGlobal = sLocal + sStart;
         AbstractODRGeometry geom = road.getPlanView().getOdrGeometries().floorEntry(sGlobal).getValue();
         Polynom elevation = (Polynom) road.getElevationProfile().getElevations().floorEntry(sGlobal).getValue();
@@ -99,30 +101,68 @@ public class RoadAreaGenerator extends AbstractAreaGenerator implements AreaGene
         initLSPTreeMap(minLaneID, maxLaneID, lsp);
         //right lanes
         double currentRightWidth = offset;
+        double currentRightHeight = 0;
         for (int i = -1; i >= minLaneID; i--) {
-            Polynom poly = ls.getRightLanes().floorEntry(i).getValue().getWidths().floorEntry(sLocal).getValue();
+            Lane currentRightLane = ls.getRightLanes().floorEntry(i).getValue();
+            Polynom poly = currentRightLane.getWidths().floorEntry(sLocal).getValue();
             double sPolyWidth = sLocal - poly.getStTransform().getsOffset();
             double width = PolynomHelper.calcPolynomValue(poly, sPolyWidth);
             currentRightWidth -= width;
-            double zOffset = 0.0; // ls.getRightLanes().floorEntry(i).getValue().getHeights().floorEntry(sLocal).getValue();
-            double h = ElevationHelper.getElevation(sGlobal, currentRightWidth, zOffset, elevation, superelevation); // TODO add lane height (outer)
+            double projectedWidth = ElevationHelper.getProjectedWidth(
+                    sGlobal,
+                    currentRightWidth,
+                    superelevation,
+                    currentRightLane.getLevel()
+            );
+            double h = ElevationHelper.getElevation(
+                    sGlobal,
+                    currentRightWidth,
+                    elevation,
+                    superelevation,
+                    currentRightLane.getLevel()
+            );
+            if (!currentRightLane.getLevel() || currentRightHeight == 0) {
+                currentRightHeight = h;
+            }
             lsp.getLanes().get(i).add(pointFactory.getODRGeometryHandler(geom.getClass())
-                    .sth2xyzPoint(geom, sGlobal, currentRightWidth, h));
+                    .sth2xyzPoint(geom, sGlobal, projectedWidth, currentRightHeight));
         }
         double currentLeftWidth = offset;
+        double currentLeftHeight = 0;
         for (int i = 1; i <= maxLaneID; i++) {
-            Polynom poly = ls.getLeftLanes().floorEntry(i).getValue().getWidths().floorEntry(sLocal).getValue();
+            Lane currentLeftLane = ls.getLeftLanes().floorEntry(i).getValue();
+            Polynom poly = currentLeftLane.getWidths().floorEntry(sLocal).getValue();
             double sPolyWidth = sLocal - poly.getStTransform().getsOffset();
             double width = PolynomHelper.calcPolynomValue(poly, sPolyWidth);
             currentLeftWidth += width;
-            double zOffset = 0.0; // ls.getRightLanes().floorEntry(i).getValue().getHeights().floorEntry(sLocal).getValue();
-            double h = ElevationHelper.getElevation(sGlobal, currentLeftWidth, zOffset, elevation, superelevation); // TODO add lane height (outer)
+            double projectedWidth = ElevationHelper.getProjectedWidth(
+                    sGlobal,
+                    currentLeftWidth,
+                    superelevation,
+                    currentLeftLane.getLevel()
+            );
+            double h = ElevationHelper.getElevation(
+                    sGlobal,
+                    currentLeftWidth,
+                    elevation,
+                    superelevation,
+                    currentLeftLane.getLevel()
+            );
+            if (!currentLeftLane.getLevel() || currentLeftHeight == 0) {
+                currentLeftHeight = h;
+            }
             lsp.getLanes().get(i).add(pointFactory.getODRGeometryHandler(geom.getClass())
-                    .sth2xyzPoint(geom, sGlobal, currentLeftWidth, h));
+                    .sth2xyzPoint(geom, sGlobal, projectedWidth, currentLeftHeight));
         }
-        double h = ElevationHelper.getElevation(sGlobal, 0.0, 0.0, elevation, superelevation);
-        lsp.getLanes().get(0)
-                .add(pointFactory.getODRGeometryHandler(geom.getClass()).sth2xyzPoint(geom, sGlobal, offset, h));
+        double projectedOffset = ElevationHelper.getProjectedWidth(
+                sGlobal,
+                offset,
+                superelevation,
+                false
+        );
+        double h = ElevationHelper.getElevation(sGlobal, 0.0, elevation, superelevation);
+        lsp.getLanes().get(0).add(pointFactory.getODRGeometryHandler(geom.getClass())
+                .sth2xyzPoint(geom, sGlobal, projectedOffset, h));
     }
 
     private void initLSPTreeMap(int minLaneID, int maxLaneID, LaneSectionParameters lsp) {
@@ -180,48 +220,50 @@ public class RoadAreaGenerator extends AbstractAreaGenerator implements AreaGene
         }
     }
 
-// TODO remove?
-//
-//    private void createLaneSectionSemanticPolygons(LaneSection ls) {
-//        TreeMap<String, ArrayList<Geometry>> laneSectionPolygons = new TreeMap<>();
-//        ls.getLeftLanes().entrySet().stream().forEach(l -> {
-//            Lane lane = l.getValue();
-//            Polygon geom = (Polygon) lane.getGmlGeometries().get(0);
-//            LaneSectionPolygon poly =
-//                    new LaneSectionPolygon(ArrayUtils.toArray(geom), new GeometryFactory());
-//            poly.setLaneType(lane.getType());
-//            putLSPolygons(lane.getType(), geom, laneSectionPolygons);
-//        });
-//        ls.getRightLanes().entrySet().stream().forEach(l -> {
-//            Lane lane = l.getValue();
-//            Polygon geom = (Polygon) lane.getGmlGeometries().get(0);
-//            LaneSectionPolygon poly =
-//                    new LaneSectionPolygon(ArrayUtils.toArray(geom), new GeometryFactory());
-//            poly.setLaneType(lane.getType());
-//            putLSPolygons(lane.getType(), geom, laneSectionPolygons);
-//        });
-//        laneSectionPolygons.entrySet().stream().forEach(l -> {
-//            Geometry geom = CascadedPolygonUnion.union(l.getValue());
-//            geom.setUserData(l.getValue().get(0).getUserData());
-//            ls.getGmlGeometries().add(geom);
-//        });
-//    }
-//
-//    /**
-//     * Put Polygon to LaneSectionPolygon Treemap.
-//     *
-//     * @param key
-//     * @param geom
-//     * @param laneSectionPolygons
-//     */
-//    private void putLSPolygons(String key, Geometry geom, TreeMap<String, ArrayList<Geometry>> laneSectionPolygons) {
-//        Map<String,String> props = new HashMap<>();
-//        props.put("laneType", key);
-//        geom.setUserData(props);
-//        if (laneSectionPolygons.get(key) == null) {
-//            laneSectionPolygons.put(key, new ArrayList<Geometry>(Arrays.asList(geom)));
-//        } else {
-//            laneSectionPolygons.get(key).add(geom);
-//        }
-//    }
+    private void createLanePolygons3D(LaneSection ls, LaneSectionParameters lsp) {
+        int minLaneID = 0;
+        int maxLaneID = 0;
+        try {
+            minLaneID = ls.getRightLanes().firstKey();
+        } catch (NoSuchElementException e) {
+        }
+        try {
+            maxLaneID = ls.getLeftLanes().lastKey();
+        } catch (NoSuchElementException e) {
+        }
+        for (int i = minLaneID; i < maxLaneID; i++) {
+            Lane lane = ODRHelper.getLanes(ls).get(i < 0 ? i : i + 1);
+            ArrayList<Point> lanePointsFirst = lsp.getLanes().get(i);
+            ArrayList<Point> lanePoints = new ArrayList<>();
+            ArrayList<Point> lanePointsNext = lsp.getLanes().get(i + 1);
+            double innerHeight = 0.0;
+            double outerHeight = 0.0;
+            for (int j = 0; j < lanePointsFirst.size(); j++) {
+                double sLocal = step * j;
+                if (lane != null && lane.getHeights().floorEntry(sLocal) != null) {
+                    Height heights = lane.getHeights().floorEntry(sLocal).getValue();
+                    innerHeight = i < 0 ? heights.getOuter() : heights.getInner();
+                }
+                lanePoints.add(Transformation.translatePoint(lanePointsFirst.get(j), 0, 0, innerHeight));
+            }
+            for (int k = lanePointsNext.size() - 1; k >= 0; k--) {
+                double sLocal = step * k;
+                if (lane != null && lane.getHeights().floorEntry(sLocal) != null) {
+                    Height heights = lane.getHeights().floorEntry(sLocal).getValue();
+                    outerHeight = i < 0 ? heights.getInner() : heights.getOuter();
+                }
+                lanePoints.add(Transformation.translatePoint(lanePointsNext.get(k), 0, 0, outerHeight));
+            }
+            lanePoints.add(lanePoints.get(0));
+            Polygon polygon = (Polygon) ODRGeometryFactory.create(JTSConstants.POLYGON, lanePoints);
+            try {
+                if (i < 0) {
+                    ls.getRightLanes().get(i).getGmlGeometries().add(polygon);
+                } else {
+                    ls.getLeftLanes().get(i + 1).getGmlGeometries().add(polygon);
+                }
+            } catch (NullPointerException e) {
+            }
+        }
+    }
 }

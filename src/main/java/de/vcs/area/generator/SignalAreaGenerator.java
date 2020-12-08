@@ -44,7 +44,8 @@ public class SignalAreaGenerator extends AbstractAreaGenerator implements AreaGe
         } catch (Exception e) {
             ODRLogger.getInstance().error("Error creating Signal. Found no superelevation for road with id " + road.getId());
         }
-        double h =  ElevationHelper.getElevation(s, t, signal.getInertialTransform().getzOffset(), elevation, superelevation);
+        double h =  ElevationHelper.getElevation(s, t, elevation, superelevation);
+        h += signal.getInertialTransform().getzOffset();
         Point point = pointFactory.getODRGeometryHandler(geom.getClass()).sth2xyzPoint(geom, s, t, h);
         double hdg = pointFactory.getODRGeometryHandler(geom.getClass()).calcHdg(geom, s);
         signal.getInertialTransform().setHdg(hdg + signal.getStTransform().getHdg());

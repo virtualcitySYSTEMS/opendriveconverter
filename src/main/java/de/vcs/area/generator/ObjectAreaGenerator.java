@@ -62,7 +62,8 @@ public class ObjectAreaGenerator extends AbstractAreaGenerator {
         } catch (Exception e) {
             ODRLogger.getInstance().error("Found no superelevation for road with id " + road.getId());
         }
-        double h = ElevationHelper.getElevation(s, t, obj.getIntertialTransform().getzOffset(), elevation, superelevation);
+        double h = ElevationHelper.getElevation(s, t, elevation, superelevation);
+        h += obj.getIntertialTransform().getzOffset();
         Point point = pointFactory.getODRGeometryHandler(geom.getClass()).sth2xyzPoint(geom, s, t, h);
         double hdg = pointFactory.getODRGeometryHandler(geom.getClass()).calcHdg(geom, s);
         obj.getIntertialTransform().setHdg(hdg + obj.getStTransform().getHdg());
