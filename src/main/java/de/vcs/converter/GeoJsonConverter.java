@@ -77,6 +77,47 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
         return geojson;
     }
 
+    public static GeoJsonFormat convertLaneBreakLines(OpenDRIVE odr) {
+        GeoJsonFormat geojson = new GeoJsonFormat();
+        CoordinateReferenceSystem sourceCRS;
+        CoordinateReferenceSystem targetCRS;
+        CRSAuthorityFactory factory = CRS.getAuthorityFactory(true);
+        GeometryFactory geometryFactory = new GeometryFactory();
+        try {
+            sourceCRS = factory.createCoordinateReferenceSystem("EPSG:25832");
+            targetCRS = factory.createCoordinateReferenceSystem("EPSG:4326");
+            for (Road road : odr.getRoads()) {
+                for (Map.Entry<Double, LaneSection> e : road.getLanes().getLaneSections().entrySet()) {
+                    Double s = e.getKey();
+                    LaneSection laneSection = e.getValue();
+                    for (Map.Entry<Integer, Lane> entry : ODRHelper.getLanes(laneSection).entrySet()) {
+                        Lane lane = entry.getValue();
+                        if (!road.getJunction().equals("-1") && lane.getType().equals("driving")) {
+                            break;
+                        }
+                        ArrayList<Geometry> geometries = lane.getGmlGeometries();
+                        geometries = Transformation.crsTransform(geometries, sourceCRS, targetCRS);
+                        geometries.stream().forEach(f -> {
+                            Coordinate[] coords = f.getCoordinates();
+                            int from = lane.getId() < 0 ? 0 : coords.length / 2;
+                            int to = lane.getId() < 0 ? coords.length / 2 : coords.length - 1;
+                            LineString line =
+                                    geometryFactory.createLineString(Arrays.copyOfRange(coords, from, to));
+                            JSONObject feature = createFeature(line);
+                            JSONObject properties = getProperties(lane);
+                            properties.put("roadId", road.getId());
+                            feature.put("properties", properties);
+                            geojson.getFeatures().add(feature);
+                        });
+                    }
+                }
+            }
+        } catch (FactoryException | TransformException e) {
+            e.printStackTrace();
+        }
+        return geojson;
+    }
+
     /**
      * Creates a top level feature for each OpenDRIVE Road represented by its area
      *
