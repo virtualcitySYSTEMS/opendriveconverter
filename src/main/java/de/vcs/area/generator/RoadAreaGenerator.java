@@ -4,6 +4,7 @@ import de.vcs.area.odrgeometryfactory.ODRGeometryFactory;
 import de.vcs.constants.JTSConstants;
 import de.vcs.datatypes.LaneSectionParameters;
 import de.vcs.model.odr.geometry.AbstractODRGeometry;
+import de.vcs.model.odr.geometry.AbstractSTGeometry;
 import de.vcs.model.odr.geometry.Polynom;
 import de.vcs.model.odr.lane.Height;
 import de.vcs.model.odr.lane.Lane;
@@ -35,7 +36,33 @@ public class RoadAreaGenerator extends AbstractAreaGenerator implements AreaGene
 
     @Override
     public void generateArea() {
+        validateRoadGeometry();
         applySRunner();
+    }
+
+    private void validateRoadGeometry() {
+        for (Map.Entry<Double, AbstractODRGeometry> entry : road.getPlanView().getOdrGeometries().entrySet()) {
+            Double s = entry.getKey();
+            AbstractODRGeometry g = entry.getValue();
+            AbstractSTGeometry geom = (AbstractSTGeometry) g;
+            Point endPoint = pointFactory.getODRGeometryHandler(geom.getClass())
+                    .sth2xyzPoint(geom, s + geom.getLength(), 0.0, 0.0);
+            if (road.getPlanView().getOdrGeometries().higherEntry(s) != null) {
+                AbstractSTGeometry next =
+                        (AbstractSTGeometry) road.getPlanView().getOdrGeometries().higherEntry(s).getValue();
+                double X = next.getInertialReference().getPos().getValue().get(0);
+                double Y = next.getInertialReference().getPos().getValue().get(1);
+                double dx = endPoint.getX() - X;
+                double dy = endPoint.getY() - Y;
+                if (Math.abs(dx) > 0.05 || Math.abs(dy) > 0.05) {
+                    ODRLogger.getInstance().warn("Planview of Road " + road.getId() + " is discontinuous at s = "
+                            + next.getLinearReference().getS() + " ! dx = " + dx + "; dy = " + dy + "; length = " + geom.getLength());
+                } else {
+                    ODRLogger.getInstance().debug("Planview of Road " + road.getId() + " is valid at s = "
+                            + next.getLinearReference().getS() + " length = " + geom.getLength());
+                }
+            }
+        }
     }
 
     private void applySRunner() {
@@ -46,7 +73,7 @@ public class RoadAreaGenerator extends AbstractAreaGenerator implements AreaGene
                 sEnd = road.getLength();
             } else {
                 try {
-                    sEnd = road.getLanes().getLaneSections().ceilingKey(key + step / 10);
+                    sEnd = road.getLanes().getLaneSections().higherKey(key);
                 } catch (Exception e) {
                     sEnd = sStart;
                 }

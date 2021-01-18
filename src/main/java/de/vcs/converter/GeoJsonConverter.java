@@ -9,6 +9,7 @@ import de.vcs.model.odr.signal.Signal;
 import de.vcs.model.odr.road.Road;
 import de.vcs.utils.ODRHelper;
 import de.vcs.utils.geometry.Transformation;
+import de.vcs.utils.log.ODRLogger;
 import org.apache.commons.lang3.ClassUtils;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.referencing.CRS;
@@ -30,6 +31,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
 
@@ -66,6 +68,7 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
                         JSONObject properties = getProperties(ls);
                         properties.put("roadId", road.getId());
                         properties.put("name", road.getName());
+                        properties.put("sOffset", ls.getLinearReference().getS());
                         feature.put("properties", properties);
                         geojson.getFeatures().add(feature);
                     });
@@ -178,6 +181,7 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
                                 JSONObject feature = createFeature(f);
                                 JSONObject properties = getProperties(lane);
                                 properties.put("roadId", road.getId());
+                                properties.put("sOffset", s);
                                 feature.put("properties", properties);
                                 geojson.getFeatures().add(feature);
                             });
@@ -262,13 +266,26 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
                 String key = entry.getKey();
                 ArrayList<Geometry> polygons = entry.getValue();
                 polygons.removeIf(g -> !(g instanceof Polygon));
-                polygons = Transformation.crsTransform(polygons, sourceCRS, targetCRS);
+//                polygons = Transformation.crsTransform(polygons, sourceCRS, targetCRS);
                 // build junction geometry by union and exterior ring
-                Polygon junctionGeometry = (Polygon) CascadedPolygonUnion.union(polygons);
-                Coordinate[] coords = junctionGeometry.getExteriorRing().getCoordinates();
-                // filter corods with invalid height
-                junctionGeometry = geometryFactory.createPolygon(
-                        Arrays.stream(coords).filter(c -> c.getZ() > 0.1).toArray(Coordinate[]::new));
+                Geometry junctionGeometry = null;
+                try {
+                    junctionGeometry = CascadedPolygonUnion.union(polygons);
+                    if (junctionGeometry instanceof  Polygon) {
+                        Coordinate[] coords = ((Polygon) junctionGeometry).getExteriorRing().getCoordinates();
+                        // filter corods with invalid height
+//                        coords = Arrays.stream(coords).filter(c -> c.getZ() > 0.1).toArray(Coordinate[]::new);
+                        if (geometryFactory.createLineString(coords).isClosed()) {
+                            junctionGeometry = geometryFactory.createPolygon(coords);
+                        }
+                    }
+                } catch (TopologyException e) {
+                    ODRLogger.getInstance().warn(e.getMessage());
+                    junctionGeometry = geometryFactory.createMultiPolygon(polygons.toArray(new Polygon[polygons.size()]));
+                    // skips overlapping polygons -> FME Buffer is better!
+                    // junctionGeometry = junctionGeometry.buffer(0);
+                }
+                junctionGeometry = Transformation.crsTransform(junctionGeometry, sourceCRS, targetCRS);
                 JSONObject feature = createFeature(junctionGeometry);
                 JSONObject properties = new JSONObject();
                 feature.put("properties", properties);
@@ -313,8 +330,10 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
                         JSONObject feature = createFeature(f);
                         JSONObject properties = getProperties(obj);
                         properties.put("roadId", road.getId());
+                        properties.put("s", obj.getLinearReference().getS());
                         properties.put("heading", obj.getIntertialTransform().getHdg());
                         properties.put("zOffset", obj.getIntertialTransform().getzOffset());
+                        properties.put("className", obj.getClass().getSimpleName());
                         feature.put("properties", properties);
                         geojson.getFeatures().add(feature);
                     });
@@ -348,6 +367,7 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
                         JSONObject feature = createFeature(f);
                         JSONObject properties = getProperties(signal);
                         properties.put("roadId", road.getId());
+                        properties.put("s", signal.getLinearReference().getS());
                         properties.put("heading", signal.getInertialTransform().getHdg());
                         properties.put("zOffset", signal.getInertialTransform().getzOffset());
                         feature.put("properties", properties);
