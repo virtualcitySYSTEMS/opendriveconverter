@@ -1,8 +1,12 @@
 package de.vcs.area.generator;
 
+import de.vcs.area.odrgeometryfactory.ODRGeometryFactory;
+import de.vcs.constants.JTSConstants;
 import de.vcs.model.odr.geometry.*;
 import de.vcs.model.odr.object.AbstractObject;
+import de.vcs.model.odr.object.Bridge;
 import de.vcs.model.odr.object.Outline;
+import de.vcs.model.odr.object.Tunnel;
 import de.vcs.model.odr.road.Road;
 import de.vcs.utils.geometry.Discretisation;
 import de.vcs.utils.geometry.OutlineCreator;
@@ -39,6 +43,8 @@ public class ObjectAreaGenerator extends AbstractAreaGenerator {
                 addComplexOutline(obj);
             } else if (obj.getRepeat().size() > 0) {
                 addRepeatedOutline(obj);
+            } else if (obj instanceof Bridge || obj instanceof Tunnel) {
+                addLineObject(obj);
             } else {
                 addSimpleOutline(obj, point);
             }
@@ -203,5 +209,21 @@ public class ObjectAreaGenerator extends AbstractAreaGenerator {
             }
         }
 
+    }
+
+    private void addLineObject(AbstractObject obj) {
+        ArrayList<Point> points = new ArrayList<>();
+        double start = obj.getLinearReference().getS();
+        double end = start + obj.getLength();
+        sRunner = Discretisation.generateSRunner(1.0, end, start);
+        sRunner.forEach(s -> {
+            double sGlobal = s;
+            AbstractODRGeometry geom = road.getPlanView().getOdrGeometries().floorEntry(sGlobal).getValue();
+            Polynom elevation = (Polynom) road.getElevationProfile().getElevations().floorEntry(sGlobal).getValue();
+            double h = ElevationHelper.getElevation(s, 0.0, elevation, null);
+            points.add(pointFactory.getODRGeometryHandler(geom.getClass())
+                    .sth2xyzPoint(geom, sGlobal, 0.0, h));
+        });
+        obj.getGmlGeometries().add(ODRGeometryFactory.create(JTSConstants.LINESTRING, points));
     }
 }
