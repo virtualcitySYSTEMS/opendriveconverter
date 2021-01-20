@@ -5,23 +5,23 @@ import de.vcs.constants.JTSConstants;
 import de.vcs.datatypes.LaneSectionParameters;
 import de.vcs.model.odr.geometry.AbstractODRGeometry;
 import de.vcs.model.odr.geometry.Polynom;
-import de.vcs.model.odr.lane.Lane;
 import de.vcs.model.odr.lane.LaneSection;
 import de.vcs.model.odr.road.Road;
 import de.vcs.utils.geometry.Discretisation;
 import de.vcs.utils.math.PolynomHelper;
 import de.vcs.utils.transformation.PointFactory;
-import org.locationtech.jts.geom.*;
-import org.locationtech.jts.operation.union.CascadedPolygonUnion;
+import org.locationtech.jts.geom.Point;
+import org.locationtech.jts.geom.Polygon;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.NoSuchElementException;
 
-public class RoadAreaGenerator extends AbstractAreaGenerator implements AreaGenerator {
+public class RoarMarkAreaGenerator extends AbstractAreaGenerator implements AreaGenerator {
 
     Road road;
     PointFactory pointFactory;
 
-    public RoadAreaGenerator(Road road) {
+    public RoarMarkAreaGenerator(Road road) {
         this.road = road;
         pointFactory = new PointFactory();
     }
@@ -161,48 +161,4 @@ public class RoadAreaGenerator extends AbstractAreaGenerator implements AreaGene
             }
         }
     }
-// TODO remove?
-//
-//    private void createLaneSectionSemanticPolygons(LaneSection ls) {
-//        TreeMap<String, ArrayList<Geometry>> laneSectionPolygons = new TreeMap<>();
-//        ls.getLeftLanes().entrySet().stream().forEach(l -> {
-//            Lane lane = l.getValue();
-//            Polygon geom = (Polygon) lane.getGmlGeometries().get(0);
-//            LaneSectionPolygon poly =
-//                    new LaneSectionPolygon(ArrayUtils.toArray(geom), new GeometryFactory());
-//            poly.setLaneType(lane.getType());
-//            putLSPolygons(lane.getType(), geom, laneSectionPolygons);
-//        });
-//        ls.getRightLanes().entrySet().stream().forEach(l -> {
-//            Lane lane = l.getValue();
-//            Polygon geom = (Polygon) lane.getGmlGeometries().get(0);
-//            LaneSectionPolygon poly =
-//                    new LaneSectionPolygon(ArrayUtils.toArray(geom), new GeometryFactory());
-//            poly.setLaneType(lane.getType());
-//            putLSPolygons(lane.getType(), geom, laneSectionPolygons);
-//        });
-//        laneSectionPolygons.entrySet().stream().forEach(l -> {
-//            Geometry geom = CascadedPolygonUnion.union(l.getValue());
-//            geom.setUserData(l.getValue().get(0).getUserData());
-//            ls.getGmlGeometries().add(geom);
-//        });
-//    }
-//
-//    /**
-//     * Put Polygon to LaneSectionPolygon Treemap.
-//     *
-//     * @param key
-//     * @param geom
-//     * @param laneSectionPolygons
-//     */
-//    private void putLSPolygons(String key, Geometry geom, TreeMap<String, ArrayList<Geometry>> laneSectionPolygons) {
-//        Map<String,String> props = new HashMap<>();
-//        props.put("laneType", key);
-//        geom.setUserData(props);
-//        if (laneSectionPolygons.get(key) == null) {
-//            laneSectionPolygons.put(key, new ArrayList<Geometry>(Arrays.asList(geom)));
-//        } else {
-//            laneSectionPolygons.get(key).add(geom);
-//        }
-//    }
 }
