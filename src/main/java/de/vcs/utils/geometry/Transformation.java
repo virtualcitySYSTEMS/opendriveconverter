@@ -1,5 +1,6 @@
 package de.vcs.utils.geometry;
 
+import de.vcs.utils.transformation.GeoidTransformation;
 import org.geotools.geometry.jts.JTS;
 import org.geotools.referencing.CRS;
 import de.vcs.model.odr.geometry.ParamPolynom;
@@ -38,18 +39,19 @@ public class Transformation {
         return transformedGeometries;
     }
 
-    public static Geometry crsTransform(Geometry geom, CoordinateReferenceSystem sourceCRS, CoordinateReferenceSystem targetCRS)
-            throws FactoryException, TransformException {
+    public static Geometry crsTransform(Geometry geom, CoordinateReferenceSystem sourceCRS,
+            CoordinateReferenceSystem targetCRS) throws FactoryException, TransformException {
         MathTransform transform = CRS.findMathTransform(sourceCRS, targetCRS);
-        return JTS.transform( geom, transform);
+        return JTS.transform(geom, transform);
     }
 
-    public static ArrayList<Geometry> crsTransform(ArrayList<Geometry> geoms, CoordinateReferenceSystem sourceCRS, CoordinateReferenceSystem targetCRS)
-            throws FactoryException, TransformException {
+    public static ArrayList<Geometry> crsTransform(ArrayList<Geometry> geoms, CoordinateReferenceSystem sourceCRS,
+            CoordinateReferenceSystem targetCRS) throws FactoryException, TransformException {
         ArrayList<Geometry> transformedGeometries = new ArrayList<>();
         MathTransform transform = CRS.findMathTransform(sourceCRS, targetCRS);
         for (Geometry g : geoms) {
-            transformedGeometries.add(JTS.transform(g, transform));
+            //TODO check if undulation is needed. Perform geoid undulation.
+            transformedGeometries.add(GeoidTransformation.transformWGSGeoid(JTS.transform(g, transform)));
         }
         return transformedGeometries;
     }
