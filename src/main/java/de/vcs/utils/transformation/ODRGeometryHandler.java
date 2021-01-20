@@ -5,7 +5,7 @@ import org.locationtech.jts.geom.Point;
 
 public interface ODRGeometryHandler {
 
-    Point sth2xyzPoint(AbstractODRGeometry geom, double s, double t);
+    Point sth2xyzPoint(AbstractODRGeometry geom, double s, double t, double h);
 
     double calcHdg(AbstractODRGeometry geom, double s);
 }

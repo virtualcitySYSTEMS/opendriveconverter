@@ -10,7 +10,7 @@ import org.locationtech.jts.geom.Point;
 public class ParamPolyHandler implements ODRGeometryHandler {
 
     @Override
-    public Point sth2xyzPoint(AbstractODRGeometry geom, double s, double t) {
+    public Point sth2xyzPoint(AbstractODRGeometry geom, double s, double t, double h) {
         if (geom.getClass().equals(ParamPolynom.class)) {
             ParamPolynom ppoly = (ParamPolynom) geom;
             double ds = s - ppoly.getLinearReference().getS();
@@ -18,6 +18,7 @@ public class ParamPolyHandler implements ODRGeometryHandler {
             Point xyz = (Point) Transformation.transform(point, ppoly.getIntertialTransform().getHdg(),
                     ppoly.getInertialReference().getPos().getValue().get(0),
                     ppoly.getInertialReference().getPos().getValue().get(1));
+            xyz.getCoordinate().setZ(h);
             return xyz;
         }
         return null;

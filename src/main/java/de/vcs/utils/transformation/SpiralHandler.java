@@ -12,7 +12,7 @@ import org.locationtech.jts.geom.Point;
 public class SpiralHandler implements ODRGeometryHandler {
 
     @Override
-    public Point sth2xyzPoint(AbstractODRGeometry geom, double s, double t) {
+    public Point sth2xyzPoint(AbstractODRGeometry geom, double s, double t, double h) {
         if (geom.equals(Spiral.class)) {
             Spiral spiral = (Spiral) geom;
             double ds = s - spiral.getLinearReference().getS();
@@ -20,6 +20,7 @@ public class SpiralHandler implements ODRGeometryHandler {
             Point xyz = (Point) Transformation.transform(point, spiral.getIntertialTransform().getHdg(),
                     spiral.getInertialReference().getPos().getValue().get(0),
                     spiral.getInertialReference().getPos().getValue().get(1));
+            xyz.getCoordinate().setZ(h);
             return xyz;
         }
         return null;

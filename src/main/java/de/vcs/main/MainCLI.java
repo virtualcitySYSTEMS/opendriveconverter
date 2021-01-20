@@ -103,6 +103,8 @@ public class MainCLI {
             System.out.println("Writing Output in: " + outputFile.getAbsolutePath());
             converters.add(new GeoJsonConverter(GeoJsonConverter::convertReferenceLine,
                     new File(outputFile, "refLine.json")));
+            converters.add(new GeoJsonConverter(GeoJsonConverter::convertLaneBreakLines,
+                    new File(outputFile, "breakLines.json")));
             converters.add(new GeoJsonConverter(GeoJsonConverter::convertRoads,
                     new File(outputFile, "roads.json")));
             converters.add(new GeoJsonConverter(GeoJsonConverter::convertLanes, new File(outputFile, "lanes.json")));

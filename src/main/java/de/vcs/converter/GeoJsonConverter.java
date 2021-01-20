@@ -7,7 +7,9 @@ import de.vcs.model.odr.lane.LaneSection;
 import de.vcs.model.odr.object.*;
 import de.vcs.model.odr.signal.Signal;
 import de.vcs.model.odr.road.Road;
+import de.vcs.utils.ODRHelper;
 import de.vcs.utils.geometry.Transformation;
+import de.vcs.utils.log.ODRLogger;
 import org.apache.commons.lang3.ClassUtils;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.referencing.CRS;
@@ -28,6 +30,8 @@ import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
 
@@ -64,12 +68,54 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
                         JSONObject properties = getProperties(ls);
                         properties.put("roadId", road.getId());
                         properties.put("name", road.getName());
+                        properties.put("sOffset", ls.getLinearReference().getS());
                         feature.put("properties", properties);
                         geojson.getFeatures().add(feature);
                     });
                 });
             }
         } catch (FactoryException e) {
+            e.printStackTrace();
+        }
+        return geojson;
+    }
+
+    public static GeoJsonFormat convertLaneBreakLines(OpenDRIVE odr) {
+        GeoJsonFormat geojson = new GeoJsonFormat();
+        CoordinateReferenceSystem sourceCRS;
+        CoordinateReferenceSystem targetCRS;
+        CRSAuthorityFactory factory = CRS.getAuthorityFactory(true);
+        GeometryFactory geometryFactory = new GeometryFactory();
+        try {
+            sourceCRS = factory.createCoordinateReferenceSystem("EPSG:25832");
+            targetCRS = factory.createCoordinateReferenceSystem("EPSG:4326");
+            for (Road road : odr.getRoads()) {
+                for (Map.Entry<Double, LaneSection> e : road.getLanes().getLaneSections().entrySet()) {
+                    Double s = e.getKey();
+                    LaneSection laneSection = e.getValue();
+                    for (Map.Entry<Integer, Lane> entry : ODRHelper.getLanes(laneSection).entrySet()) {
+                        Lane lane = entry.getValue();
+                        if (!road.getJunction().equals("-1") && lane.getType().equals("driving")) {
+                            break;
+                        }
+                        ArrayList<Geometry> geometries = lane.getGmlGeometries();
+                        geometries = Transformation.crsTransform(geometries, sourceCRS, targetCRS);
+                        geometries.stream().forEach(f -> {
+                            Coordinate[] coords = f.getCoordinates();
+                            int from = lane.getId() < 0 ? 0 : coords.length / 2;
+                            int to = lane.getId() < 0 ? coords.length / 2 : coords.length - 1;
+                            LineString line =
+                                    geometryFactory.createLineString(Arrays.copyOfRange(coords, from, to));
+                            JSONObject feature = createFeature(line);
+                            JSONObject properties = getProperties(lane);
+                            properties.put("roadId", road.getId());
+                            feature.put("properties", properties);
+                            geojson.getFeatures().add(feature);
+                        });
+                    }
+                }
+            }
+        } catch (FactoryException | TransformException e) {
             e.printStackTrace();
         }
         return geojson;
@@ -123,7 +169,7 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
                 for (Map.Entry<Double, LaneSection> e : road.getLanes().getLaneSections().entrySet()) {
                     Double s = e.getKey();
                     LaneSection laneSection = e.getValue();
-                    for (Map.Entry<Integer, Lane> entry : getLanes(laneSection).entrySet()) {
+                    for (Map.Entry<Integer, Lane> entry : ODRHelper.getLanes(laneSection).entrySet()) {
                         Lane lane = entry.getValue();
                         if (!road.getJunction().equals("-1") && lane.getType().equals("driving")) {
                             break;
@@ -135,6 +181,7 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
                                 JSONObject feature = createFeature(f);
                                 JSONObject properties = getProperties(lane);
                                 properties.put("roadId", road.getId());
+                                properties.put("sOffset", s);
                                 feature.put("properties", properties);
                                 geojson.getFeatures().add(feature);
                             });
@@ -194,6 +241,7 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
         CoordinateReferenceSystem sourceCRS;
         CoordinateReferenceSystem targetCRS;
         CRSAuthorityFactory factory = CRS.getAuthorityFactory(true);
+        GeometryFactory geometryFactory = new GeometryFactory();
         try {
             sourceCRS = factory.createCoordinateReferenceSystem("EPSG:25832");
             targetCRS = factory.createCoordinateReferenceSystem("EPSG:4326");
@@ -203,7 +251,7 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
                     for (Map.Entry<Double, LaneSection> e : road.getLanes().getLaneSections().entrySet()) {
                         Double s = e.getKey();
                         LaneSection laneSection = e.getValue();
-                        for (Map.Entry<Integer, Lane> entry : getLanes(laneSection).entrySet()) {
+                        for (Map.Entry<Integer, Lane> entry : ODRHelper.getLanes(laneSection).entrySet()) {
                             Integer laneId = entry.getKey();
                             Lane lane = entry.getValue();
                             if (lane.getType().equals("driving")) {
@@ -218,8 +266,26 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
                 String key = entry.getKey();
                 ArrayList<Geometry> polygons = entry.getValue();
                 polygons.removeIf(g -> !(g instanceof Polygon));
-                polygons = Transformation.crsTransform(polygons, sourceCRS, targetCRS);
-                Geometry junctionGeometry = CascadedPolygonUnion.union(polygons);
+//                polygons = Transformation.crsTransform(polygons, sourceCRS, targetCRS);
+                // build junction geometry by union and exterior ring
+                Geometry junctionGeometry = null;
+                try {
+                    junctionGeometry = CascadedPolygonUnion.union(polygons);
+                    if (junctionGeometry instanceof  Polygon) {
+                        Coordinate[] coords = ((Polygon) junctionGeometry).getExteriorRing().getCoordinates();
+                        // filter corods with invalid height
+//                        coords = Arrays.stream(coords).filter(c -> c.getZ() > 0.1).toArray(Coordinate[]::new);
+                        if (geometryFactory.createLineString(coords).isClosed()) {
+                            junctionGeometry = geometryFactory.createPolygon(coords);
+                        }
+                    }
+                } catch (TopologyException e) {
+                    ODRLogger.getInstance().warn(e.getMessage());
+                    junctionGeometry = geometryFactory.createMultiPolygon(polygons.toArray(new Polygon[polygons.size()]));
+                    // skips overlapping polygons -> FME Buffer is better!
+                    // junctionGeometry = junctionGeometry.buffer(0);
+                }
+                junctionGeometry = Transformation.crsTransform(junctionGeometry, sourceCRS, targetCRS);
                 JSONObject feature = createFeature(junctionGeometry);
                 JSONObject properties = new JSONObject();
                 feature.put("properties", properties);
@@ -240,14 +306,6 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
         } else {
             junctionMap.get(key).addAll(geometries);
         }
-    }
-
-    // TODO move to utils?
-    public static TreeMap<Integer, Lane> getLanes(LaneSection ls) {
-        TreeMap<Integer, Lane> lanes = new TreeMap<>();
-        lanes.putAll(ls.getLeftLanes());
-        lanes.putAll(ls.getRightLanes());
-        return lanes;
     }
 
     /**
@@ -272,8 +330,10 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
                         JSONObject feature = createFeature(f);
                         JSONObject properties = getProperties(obj);
                         properties.put("roadId", road.getId());
+                        properties.put("s", obj.getLinearReference().getS());
                         properties.put("heading", obj.getIntertialTransform().getHdg());
                         properties.put("zOffset", obj.getIntertialTransform().getzOffset());
+                        properties.put("className", obj.getClass().getSimpleName());
                         feature.put("properties", properties);
                         geojson.getFeatures().add(feature);
                     });
@@ -307,6 +367,7 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
                         JSONObject feature = createFeature(f);
                         JSONObject properties = getProperties(signal);
                         properties.put("roadId", road.getId());
+                        properties.put("s", signal.getLinearReference().getS());
                         properties.put("heading", signal.getInertialTransform().getHdg());
                         properties.put("zOffset", signal.getInertialTransform().getzOffset());
                         feature.put("properties", properties);
@@ -344,6 +405,7 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
     private static JSONObject createFeature(Geometry geom) {
         JSONObject feature = new JSONObject();
         GeoJsonWriter geomWriter = new GeoJsonWriter();
+        geomWriter.setEncodeCRS(false);
         JSONParser parser = new JSONParser();
         try {
             JSONObject geomObject = (JSONObject) parser.parse(geomWriter.write(geom));
@@ -377,6 +439,25 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
                     ArrayList<?> arrayList = (ArrayList<?>) f.get(element);
                     if (arrayList != null) {
                         arrayList.forEach(v -> {
+                            if (ClassUtils.isPrimitiveOrWrapper(v.getClass())) {
+                                array.add(v);
+                            } else if (v instanceof AbstractOpenDriveElement){
+                                array.add(getProperties((AbstractOpenDriveElement) v));
+                            }
+                        });
+                        if (!array.isEmpty()) {
+                            properties.put(f.getName(), array);
+                        }
+                    }
+                }catch (IllegalAccessException e) {
+                    e.printStackTrace();
+                }
+            } else if (f.getType().isAssignableFrom(TreeMap.class)) {
+                try {
+                    JSONArray array = new JSONArray();
+                    TreeMap<?, ?> map = (TreeMap<?, ?>) f.get(element);
+                    if (map != null) {
+                        map.forEach((k, v) -> {
                             if (ClassUtils.isPrimitiveOrWrapper(v.getClass())) {
                                 array.add(v);
                             } else if (v instanceof AbstractOpenDriveElement){

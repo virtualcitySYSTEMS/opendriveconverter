@@ -12,7 +12,7 @@ import org.locationtech.jts.geom.Point;
 public class PolyHandler implements ODRGeometryHandler {
 
     @Override
-    public Point sth2xyzPoint(AbstractODRGeometry geom, double s, double t) {
+    public Point sth2xyzPoint(AbstractODRGeometry geom, double s, double t, double h) {
         if (geom.getClass().equals(Polynom.class)) {
             Polynom poly = (Polynom) geom;
             double ds = s - poly.getLinearReference().getS();
@@ -20,6 +20,7 @@ public class PolyHandler implements ODRGeometryHandler {
             Point xyz = (Point) Transformation.transform(point, poly.getIntertialTransform().getHdg(),
                     poly.getInertialReference().getPos().getValue().get(0),
                     poly.getInertialReference().getPos().getValue().get(1));
+            xyz.getCoordinate().setZ(h);
             return xyz;
         }
         return null;
