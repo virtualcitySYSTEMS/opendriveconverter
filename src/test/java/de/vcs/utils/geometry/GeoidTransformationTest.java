@@ -27,4 +27,12 @@ public class GeoidTransformationTest {
             System.out.println(c.getZ());
         });
     }
+
+    @Test
+    public void transformWGSGeoidTest2() throws TransformException, FactoryException {
+        GeometryFactory gf = new GeometryFactory();
+        Point p = gf.createPoint(new Coordinate(48.76992, 11.43904, 573));
+        p.setSRID(4326);
+        System.out.println(GeoidTransformation.transformWGSGeoid(p).getCoordinates()[0].getZ());
+    }
 }
