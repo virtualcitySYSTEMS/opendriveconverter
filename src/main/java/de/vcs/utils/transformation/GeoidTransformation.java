@@ -40,14 +40,10 @@ public class GeoidTransformation {
     }
 
     public static Geometry transformWGSGeoid(Geometry g) throws TransformException, FactoryException {
-        if (g.getSRID() == 4326) {
-            return JTS.transform(g, mt);
-        } else {
-            return g;
-        }
+        return JTS.transform(g, mt);
     }
 
-    public static GeoidTransformation getInstance() {
+    public static synchronized GeoidTransformation getInstance() {
         if (instance == null) {
             instance = new GeoidTransformation();
         }

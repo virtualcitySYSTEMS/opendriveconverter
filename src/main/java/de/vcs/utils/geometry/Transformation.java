@@ -47,13 +47,18 @@ public class Transformation {
 
     public static ArrayList<Geometry> crsTransform(ArrayList<Geometry> geoms, CoordinateReferenceSystem sourceCRS,
             CoordinateReferenceSystem targetCRS) throws FactoryException, TransformException {
+        GeoidTransformation geoidTransformation = GeoidTransformation.getInstance();
         ArrayList<Geometry> transformedGeometries = new ArrayList<>();
         MathTransform transform = CRS.findMathTransform(sourceCRS, targetCRS);
-        for (Geometry g : geoms) {
-            //TODO check if undulation is needed. Perform geoid undulation.
-            GeoidTransformation geoidTransformation = GeoidTransformation.getInstance();
-            transformedGeometries.add(geoidTransformation.transformWGSGeoid(JTS.transform(g, transform)));
-        }
+        geoms.parallelStream().forEach(g -> {
+            try {
+                transformedGeometries.add(geoidTransformation.transformWGSGeoid(JTS.transform(g, transform)));
+            } catch (TransformException e) {
+                e.printStackTrace();
+            } catch (FactoryException e) {
+                e.printStackTrace();
+            }
+        });
         return transformedGeometries;
     }
 
