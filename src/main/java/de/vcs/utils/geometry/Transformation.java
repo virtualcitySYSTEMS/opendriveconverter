@@ -51,7 +51,8 @@ public class Transformation {
         MathTransform transform = CRS.findMathTransform(sourceCRS, targetCRS);
         for (Geometry g : geoms) {
             //TODO check if undulation is needed. Perform geoid undulation.
-            transformedGeometries.add(GeoidTransformation.transformWGSGeoid(JTS.transform(g, transform)));
+            GeoidTransformation geoidTransformation = GeoidTransformation.getInstance();
+            transformedGeometries.add(geoidTransformation.transformWGSGeoid(JTS.transform(g, transform)));
         }
         return transformedGeometries;
     }
