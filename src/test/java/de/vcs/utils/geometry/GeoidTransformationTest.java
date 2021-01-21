@@ -31,7 +31,7 @@ public class GeoidTransformationTest {
     @Test
     public void transformWGSGeoidTest2() throws TransformException, FactoryException {
         GeometryFactory gf = new GeometryFactory();
-        Point p = gf.createPoint(new Coordinate(48.76992, 11.43904, 573));
+        Point p = gf.createPoint(new Coordinate(11.42299844,48.77489221,419.1176692));
         p.setSRID(4326);
         System.out.println(GeoidTransformation.transformWGSGeoid(p).getCoordinates()[0].getZ());
     }
