@@ -2,16 +2,14 @@ package de.vcs.utils.transformation;
 
 import de.vcs.model.odr.geometry.AbstractODRGeometry;
 import de.vcs.model.odr.geometry.Arc;
-import de.vcs.model.odr.geometry.ParamPolynom;
 import de.vcs.utils.geometry.Transformation;
 import de.vcs.utils.math.ArcHelper;
 import de.vcs.utils.math.ODRMath;
-import de.vcs.utils.math.ParamPolynomHelper;
 import org.locationtech.jts.geom.Point;
 
 public class ArcHandler implements ODRGeometryHandler {
     @Override
-    public Point sth2xyzPoint(AbstractODRGeometry geom, double s, double t) {
+    public Point sth2xyzPoint(AbstractODRGeometry geom, double s, double t, double h) {
         if (geom.equals(Arc.class)) {
             Arc arc = (Arc) geom;
             double ds = s - arc.getLinearReference().getS();
@@ -19,6 +17,7 @@ public class ArcHandler implements ODRGeometryHandler {
             Point xyz = (Point) Transformation.transform(point, arc.getIntertialTransform().getHdg(),
                     arc.getInertialReference().getPos().getValue().get(0),
                     arc.getInertialReference().getPos().getValue().get(1));
+            xyz.getCoordinate().setZ(h);
             return xyz;
         }
         return null;

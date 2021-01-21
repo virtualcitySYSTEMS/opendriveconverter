@@ -1,14 +1,17 @@
 package de.vcs.area.generator;
 
-import de.vcs.model.odr.geometry.AbstractODRGeometry;
-import de.vcs.model.odr.geometry.STHPosition;
-import de.vcs.model.odr.geometry.STHRepeat;
-import de.vcs.model.odr.geometry.UVZPosition;
+import de.vcs.area.odrgeometryfactory.ODRGeometryFactory;
+import de.vcs.constants.JTSConstants;
+import de.vcs.model.odr.geometry.*;
 import de.vcs.model.odr.object.AbstractObject;
+import de.vcs.model.odr.object.Bridge;
 import de.vcs.model.odr.object.Outline;
+import de.vcs.model.odr.object.Tunnel;
 import de.vcs.model.odr.road.Road;
 import de.vcs.utils.geometry.Discretisation;
 import de.vcs.utils.geometry.OutlineCreator;
+import de.vcs.utils.log.ODRLogger;
+import de.vcs.utils.math.ElevationHelper;
 import de.vcs.utils.math.ODRMath;
 import de.vcs.utils.transformation.PointFactory;
 import org.locationtech.jts.geom.*;
@@ -32,6 +35,7 @@ public class ObjectAreaGenerator extends AbstractAreaGenerator {
         apply2D();
     }
 
+    //TODO all outlines are 2D => no elevation data for now
     private void apply2D() {
         for (AbstractObject obj : road.getObjects()) {
             Point point = createPoint(obj);
@@ -39,6 +43,8 @@ public class ObjectAreaGenerator extends AbstractAreaGenerator {
                 addComplexOutline(obj);
             } else if (obj.getRepeat().size() > 0) {
                 addRepeatedOutline(obj);
+            } else if (obj instanceof Bridge || obj instanceof Tunnel) {
+                addLineObject(obj);
             } else {
                 addSimpleOutline(obj, point);
             }
@@ -52,10 +58,20 @@ public class ObjectAreaGenerator extends AbstractAreaGenerator {
      * @return point geometry
      */
     private Point createPoint(AbstractObject obj) {
-        STHPosition sth = obj.getLinearReference();
-        AbstractODRGeometry geom = road.getPlanView().getOdrGeometries().floorEntry(sth.getS()).getValue();
-        Point point = pointFactory.getODRGeometryHandler(geom.getClass()).sth2xyzPoint(geom, sth.getS(), sth.getT());
-        double hdg = pointFactory.getODRGeometryHandler(geom.getClass()).calcHdg(geom, sth.getS());
+        double s = obj.getLinearReference().getS();
+        double t = obj.getLinearReference().getT();
+        AbstractODRGeometry geom = road.getPlanView().getOdrGeometries().floorEntry(s).getValue();
+        Polynom elevation = (Polynom) road.getElevationProfile().getElevations().floorEntry(s).getValue();
+        Polynom superelevation = null;
+        try {
+            superelevation = (Polynom) road.getLateralProfile().getSuperElevations().floorEntry(s).getValue();
+        } catch (Exception e) {
+            ODRLogger.getInstance().error("Found no superelevation for road with id " + road.getId());
+        }
+        double h = ElevationHelper.getElevation(s, t, elevation, superelevation);
+        h += obj.getIntertialTransform().getzOffset();
+        Point point = pointFactory.getODRGeometryHandler(geom.getClass()).sth2xyzPoint(geom, s, t, h);
+        double hdg = pointFactory.getODRGeometryHandler(geom.getClass()).calcHdg(geom, s);
         obj.getIntertialTransform().setHdg(hdg + obj.getStTransform().getHdg());
         return point;
     }
@@ -75,12 +91,14 @@ public class ObjectAreaGenerator extends AbstractAreaGenerator {
             Point p1 = pointFactory.getODRGeometryHandler(geom.getClass()).sth2xyzPoint(
                     geom,
                     sth.getS() - obj.getLength() / 2,
-                    sth.getT() - obj.getWidth() / 2
+                    sth.getT() - obj.getWidth() / 2,
+                    0.0 //TODO or also with elevation?
                     );
             Point p2 = pointFactory.getODRGeometryHandler(geom.getClass()).sth2xyzPoint(
                     geom,
                     sth.getS() + obj.getLength() / 2,
-                    sth.getT() + obj.getWidth() / 2
+                    sth.getT() + obj.getWidth() / 2,
+                    0.0 //TODO or also with elevation?
             );
             obj.getGmlGeometries().add(OutlineCreator.createRectangularOutline(p1, p2));
         } else {
@@ -99,7 +117,9 @@ public class ObjectAreaGenerator extends AbstractAreaGenerator {
             if (outline.getCornerRoad() != null) {
                 for (STHPosition position : outline.getCornerRoad()) {
                     AbstractODRGeometry geom = road.getPlanView().getOdrGeometries().floorEntry(position.getS()).getValue();
-                    Point p = pointFactory.getODRGeometryHandler(geom.getClass()).sth2xyzPoint(geom, position.getS(), position.getT());
+                    //TODO or also with elevation?
+                    Point p = pointFactory.getODRGeometryHandler(geom.getClass()).sth2xyzPoint(geom, position.getS(), position.getT(), 0.0);
+
                     coordinates.add(p.getCoordinate());
                 }
             } else {
@@ -109,7 +129,8 @@ public class ObjectAreaGenerator extends AbstractAreaGenerator {
                     Point p = pointFactory.getODRGeometryHandler(geom.getClass()).sth2xyzPoint(
                             geom,
                             position.getS() + uvz.getU(),
-                            position.getT() + uvz.getV()
+                            position.getT() + uvz.getV(),
+                            0.0 //TODO or also with elevation?
                     );
                     coordinates.add(p.getCoordinate());
                 }
@@ -139,8 +160,8 @@ public class ObjectAreaGenerator extends AbstractAreaGenerator {
                         interp
                 );
                 AbstractODRGeometry geom = road.getPlanView().getOdrGeometries().floorEntry(s).getValue();
-                inner.add(pointFactory.getODRGeometryHandler(geom.getClass()).sth2xyzPoint(geom, s, t - width / 2).getCoordinate()); //TODO zOffset
-                outer.add(pointFactory.getODRGeometryHandler(geom.getClass()).sth2xyzPoint(geom, s, t + width / 2).getCoordinate()); //TODO zOffset
+                inner.add(pointFactory.getODRGeometryHandler(geom.getClass()).sth2xyzPoint(geom, s, t - width / 2, 0.0).getCoordinate()); //TODO zOffset
+                outer.add(pointFactory.getODRGeometryHandler(geom.getClass()).sth2xyzPoint(geom, s, t + width / 2, 0.0).getCoordinate()); //TODO zOffset
             });
             obj.getGmlGeometries().add(OutlineCreator.createPolygonalOutline(inner, outer));
         } else {
@@ -155,7 +176,8 @@ public class ObjectAreaGenerator extends AbstractAreaGenerator {
                     double t = ODRMath.interpolate(repeat.getStart().getT(), repeat.getEnd().getT(), interp);
                     if (repeat.getRadiusStart() != 0.0 && repeat.getRadiusEnd() != 0.0) {
                         double radius = ODRMath.interpolate(repeat.getRadiusStart(), repeat.getRadiusEnd(), interp);
-                        Point point = pointFactory.getODRGeometryHandler(geom.getClass()).sth2xyzPoint(geom, s, t);
+                        //TODO or also with elevation?
+                        Point point = pointFactory.getODRGeometryHandler(geom.getClass()).sth2xyzPoint(geom, s, t, 0.0);
                         obj.getGmlGeometries().add(OutlineCreator.createCircularOutline(point, radius));
                     } else {
                         double length = ODRMath.interpolate(repeat.getLengthStart(), repeat.getLengthEnd(), interp);
@@ -169,13 +191,15 @@ public class ObjectAreaGenerator extends AbstractAreaGenerator {
                         Point p1 = pointFactory.getODRGeometryHandler(geom.getClass()).sth2xyzPoint(
                                 geom,
                                 s - length / 2,
-                                t - width / 2
+                                t - width / 2,
+                                0.0 //TODO or also with elevation?
                         );
                         //TODO zOffset
                         Point p2 = pointFactory.getODRGeometryHandler(geom.getClass()).sth2xyzPoint(
                                 geom,
                                 s + length / 2,
-                                t + width / 2
+                                t + width / 2,
+                                0.0 //TODO or also with elevation?
                         );
                         obj.getGmlGeometries().add(OutlineCreator.createRectangularOutline(p1, p2));
                     }
@@ -185,5 +209,21 @@ public class ObjectAreaGenerator extends AbstractAreaGenerator {
             }
         }
 
+    }
+
+    private void addLineObject(AbstractObject obj) {
+        ArrayList<Point> points = new ArrayList<>();
+        double start = obj.getLinearReference().getS();
+        double end = start + obj.getLength();
+        sRunner = Discretisation.generateSRunner(1.0, end, start);
+        sRunner.forEach(s -> {
+            double sGlobal = s;
+            AbstractODRGeometry geom = road.getPlanView().getOdrGeometries().floorEntry(sGlobal).getValue();
+            Polynom elevation = (Polynom) road.getElevationProfile().getElevations().floorEntry(sGlobal).getValue();
+            double h = ElevationHelper.getElevation(s, 0.0, elevation, null);
+            points.add(pointFactory.getODRGeometryHandler(geom.getClass())
+                    .sth2xyzPoint(geom, sGlobal, 0.0, h));
+        });
+        obj.getGmlGeometries().add(ODRGeometryFactory.create(JTSConstants.LINESTRING, points));
     }
 }
