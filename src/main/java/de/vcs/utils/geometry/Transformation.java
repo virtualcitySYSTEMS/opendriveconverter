@@ -42,20 +42,21 @@ public class Transformation {
     public static Geometry crsTransform(Geometry geom, CoordinateReferenceSystem sourceCRS,
             CoordinateReferenceSystem targetCRS) throws FactoryException, TransformException {
         MathTransform transform = CRS.findMathTransform(sourceCRS, targetCRS);
-        return JTS.transform(geom, transform);
+        // TODO flag, when to use GeoidTransformation
+        GeoidTransformation geoidTransformation = GeoidTransformation.getInstance();
+        return geoidTransformation.transformWGSGeoid(JTS.transform(geom, transform));
     }
 
     public static ArrayList<Geometry> crsTransform(ArrayList<Geometry> geoms, CoordinateReferenceSystem sourceCRS,
             CoordinateReferenceSystem targetCRS) throws FactoryException, TransformException {
+        // TODO flag, when to use GeoidTransformation
         GeoidTransformation geoidTransformation = GeoidTransformation.getInstance();
         ArrayList<Geometry> transformedGeometries = new ArrayList<>();
         MathTransform transform = CRS.findMathTransform(sourceCRS, targetCRS);
         geoms.parallelStream().forEach(g -> {
             try {
                 transformedGeometries.add(geoidTransformation.transformWGSGeoid(JTS.transform(g, transform)));
-            } catch (TransformException e) {
-                e.printStackTrace();
-            } catch (FactoryException e) {
+            } catch (TransformException | FactoryException e) {
                 e.printStackTrace();
             }
         });

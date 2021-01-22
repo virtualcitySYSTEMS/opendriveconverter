@@ -39,7 +39,7 @@ public class GeoidTransformation {
         }
     }
 
-    public static Geometry transformWGSGeoid(Geometry g) throws TransformException, FactoryException {
+    public Geometry transformWGSGeoid(Geometry g) throws TransformException, FactoryException {
         return JTS.transform(g, mt);
     }
 
