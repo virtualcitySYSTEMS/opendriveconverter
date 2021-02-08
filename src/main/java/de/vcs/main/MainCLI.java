@@ -41,8 +41,10 @@ public class MainCLI {
 
     public static void main(String[] args) {
         try {
-            MainCLI mainCLI = new MainCLI("src/main/resources/2020-06-19_SAVe_Ingolstadt_Prio4.xodr",
-                    "src/main/resources/2020-06-19_SAVe_Ingolstadt_Prio4");
+//            MainCLI mainCLI = new MainCLI("src/main/resources/2020-06-19_SAVe_Ingolstadt_Prio4.xodr",
+//                    "src/main/resources/2020-06-19_SAVe_Ingolstadt_Prio4");
+            MainCLI mainCLI = new MainCLI("src/main/resources/2020-09-21_SAVe_Ingolstadt_Update2_Prio1-6.xodr",
+                    "src/main/resources/2020-09-21_SAVe_Ingolstadt_Update2_Prio1-6");
             mainCLI.doMain();
         } catch (Exception e) {
             e.printStackTrace();

@@ -245,7 +245,6 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
         try {
             sourceCRS = factory.createCoordinateReferenceSystem("EPSG:25832");
             targetCRS = factory.createCoordinateReferenceSystem("EPSG:4326");
-            SimpleFeatureTypeBuilder featureTypeBuilder = new SimpleFeatureTypeBuilder();
             for (Road road : odr.getRoads()) {
                 if (!road.getJunction().equals("-1")) {
                     for (Map.Entry<Double, LaneSection> e : road.getLanes().getLaneSections().entrySet()) {
@@ -266,25 +265,26 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
                 String key = entry.getKey();
                 ArrayList<Geometry> polygons = entry.getValue();
                 polygons.removeIf(g -> !(g instanceof Polygon));
+                // TODO find approach for creating a junction area (currently multipolygon)
 //                polygons = Transformation.crsTransform(polygons, sourceCRS, targetCRS);
                 // build junction geometry by union and exterior ring
                 Geometry junctionGeometry = null;
-                try {
-                    junctionGeometry = CascadedPolygonUnion.union(polygons);
-                    if (junctionGeometry instanceof  Polygon) {
-                        Coordinate[] coords = ((Polygon) junctionGeometry).getExteriorRing().getCoordinates();
-                        // filter corods with invalid height
-//                        coords = Arrays.stream(coords).filter(c -> c.getZ() > 0.1).toArray(Coordinate[]::new);
-                        if (geometryFactory.createLineString(coords).isClosed()) {
-                            junctionGeometry = geometryFactory.createPolygon(coords);
-                        }
-                    }
-                } catch (TopologyException e) {
-                    ODRLogger.getInstance().warn(e.getMessage());
+//                try {
+//                    junctionGeometry = CascadedPolygonUnion.union(polygons);
+//                    if (junctionGeometry instanceof  Polygon) {
+//                        Coordinate[] coords = ((Polygon) junctionGeometry).getExteriorRing().getCoordinates();
+//                        // filter corods with invalid height
+////                        coords = Arrays.stream(coords).filter(c -> c.getZ() > 0.1).toArray(Coordinate[]::new);
+//                        if (geometryFactory.createLineString(coords).isClosed()) {
+//                            junctionGeometry = geometryFactory.createPolygon(coords);
+//                        }
+//                    }
+//                } catch (TopologyException e) {
+//                    ODRLogger.getInstance().warn(e.getMessage());
                     junctionGeometry = geometryFactory.createMultiPolygon(polygons.toArray(new Polygon[polygons.size()]));
                     // skips overlapping polygons -> FME Buffer is better!
                     // junctionGeometry = junctionGeometry.buffer(0);
-                }
+//                }
                 junctionGeometry = Transformation.crsTransform(junctionGeometry, sourceCRS, targetCRS);
                 JSONObject feature = createFeature(junctionGeometry);
                 JSONObject properties = new JSONObject();

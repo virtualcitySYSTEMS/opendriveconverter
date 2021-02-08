@@ -1,5 +1,6 @@
 package de.vcs.utils.geometry;
 
+import de.vcs.utils.transformation.GeoidTransformation;
 import org.geotools.geometry.jts.JTS;
 import org.geotools.referencing.CRS;
 import de.vcs.model.odr.geometry.ParamPolynom;
@@ -41,18 +42,24 @@ public class Transformation {
     public static Geometry crsTransform(Geometry geom, CoordinateReferenceSystem sourceCRS,
             CoordinateReferenceSystem targetCRS) throws FactoryException, TransformException {
         MathTransform transform = CRS.findMathTransform(sourceCRS, targetCRS);
-        return JTS.transform(geom, transform);
+        // TODO flag, when to use GeoidTransformation
+        GeoidTransformation geoidTransformation = GeoidTransformation.getInstance();
+        return geoidTransformation.transformWGSGeoid(JTS.transform(geom, transform));
     }
 
     public static ArrayList<Geometry> crsTransform(ArrayList<Geometry> geoms, CoordinateReferenceSystem sourceCRS,
             CoordinateReferenceSystem targetCRS) throws FactoryException, TransformException {
+        // TODO flag, when to use GeoidTransformation
+        GeoidTransformation geoidTransformation = GeoidTransformation.getInstance();
         ArrayList<Geometry> transformedGeometries = new ArrayList<>();
         MathTransform transform = CRS.findMathTransform(sourceCRS, targetCRS);
-        for (Geometry g : geoms) {
-            transformedGeometries.add(JTS.transform(g, transform));
-            // transformed
-            // height anbringen
-        }
+        geoms.parallelStream().forEach(g -> {
+            try {
+                transformedGeometries.add(geoidTransformation.transformWGSGeoid(JTS.transform(g, transform)));
+            } catch (TransformException | FactoryException e) {
+                e.printStackTrace();
+            }
+        });
         return transformedGeometries;
     }
 
