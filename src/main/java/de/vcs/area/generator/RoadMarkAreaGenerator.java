@@ -36,33 +36,7 @@ public class RoadMarkAreaGenerator extends AbstractAreaGenerator implements Area
 
     @Override
     public void generateArea() {
-        validateRoadGeometry();
         applySRunner();
-    }
-
-    private void validateRoadGeometry() {
-        for (Map.Entry<Double, AbstractODRGeometry> entry : road.getPlanView().getOdrGeometries().entrySet()) {
-            Double s = entry.getKey();
-            AbstractODRGeometry g = entry.getValue();
-            AbstractSTGeometry geom = (AbstractSTGeometry) g;
-            Point endPoint = pointFactory.getODRGeometryHandler(geom.getClass())
-                    .sth2xyzPoint(geom, s + geom.getLength(), 0.0, 0.0);
-            if (road.getPlanView().getOdrGeometries().higherEntry(s) != null) {
-                AbstractSTGeometry next =
-                        (AbstractSTGeometry) road.getPlanView().getOdrGeometries().higherEntry(s).getValue();
-                double X = next.getInertialReference().getPos().getValue().get(0);
-                double Y = next.getInertialReference().getPos().getValue().get(1);
-                double dx = endPoint.getX() - X;
-                double dy = endPoint.getY() - Y;
-                if (Math.abs(dx) > 0.05 || Math.abs(dy) > 0.05) {
-                    ODRLogger.getInstance().warn("Planview of Road " + road.getId() + " is discontinuous at s = "
-                                                 + next.getLinearReference().getS() + " ! dx = " + dx + "; dy = " + dy + "; length = " + geom.getLength());
-                } else {
-                    ODRLogger.getInstance().debug("Planview of Road " + road.getId() + " is valid at s = "
-                                                  + next.getLinearReference().getS() + " length = " + geom.getLength());
-                }
-            }
-        }
     }
 
     private void applySRunner() {
@@ -94,7 +68,11 @@ public class RoadMarkAreaGenerator extends AbstractAreaGenerator implements Area
         });
     }
 
+    private void createRoadMarkGround(LaneSection ls) {
+    }
+    
     private void createLaneGroundPoints(double sLocal, double sStart, LaneSectionParameters lsp, LaneSection ls) {
+        // hier den neuen sRunner basierend auf RoadMArkType
         double sGlobal = sLocal + sStart;
         AbstractODRGeometry geom = road.getPlanView().getOdrGeometries().floorEntry(sGlobal).getValue();
         Polynom elevation = (Polynom) road.getElevationProfile().getElevations().floorEntry(sGlobal).getValue();
@@ -102,7 +80,8 @@ public class RoadMarkAreaGenerator extends AbstractAreaGenerator implements Area
         try {
             superelevation = (Polynom) road.getLateralProfile().getSuperElevations().floorEntry(sGlobal).getValue();
         } catch (Exception e) {
-            ODRLogger.getInstance().error("Error creating RoadArea. Found no superelevation for road with id " + road.getId());
+            ODRLogger.getInstance()
+                    .error("Error creating RoadArea. Found no superelevation for road with id " + road.getId());
         }
         // TODO shape
         double offset = 0.0;
@@ -110,9 +89,8 @@ public class RoadMarkAreaGenerator extends AbstractAreaGenerator implements Area
             offset = 0.0;
         } else {
             double sPolyOffset = road.getLanes().getLaneOffsets().floorEntry(sGlobal).getKey();
-            offset = PolynomHelper
-                    .calcPolynomValue(road.getLanes().getLaneOffsets().floorEntry(sGlobal).getValue(),
-                            sGlobal - sPolyOffset);
+            offset = PolynomHelper.calcPolynomValue(road.getLanes().getLaneOffsets().floorEntry(sGlobal).getValue(),
+                    sGlobal - sPolyOffset);
         }
         // init Treemap
         int minLaneID = 0;
@@ -135,19 +113,10 @@ public class RoadMarkAreaGenerator extends AbstractAreaGenerator implements Area
             double sPolyWidth = sLocal - poly.getStTransform().getsOffset();
             double width = PolynomHelper.calcPolynomValue(poly, sPolyWidth);
             currentRightWidth -= width;
-            double projectedWidth = ElevationHelper.getProjectedWidth(
-                    sGlobal,
-                    currentRightWidth,
-                    superelevation,
-                    currentRightLane.getLevel()
-            );
-            double h = ElevationHelper.getElevation(
-                    sGlobal,
-                    currentRightWidth,
-                    elevation,
-                    superelevation,
-                    currentRightLane.getLevel()
-            );
+            double projectedWidth = ElevationHelper
+                    .getProjectedWidth(sGlobal, currentRightWidth, superelevation, currentRightLane.getLevel());
+            double h = ElevationHelper
+                    .getElevation(sGlobal, currentRightWidth, elevation, superelevation, currentRightLane.getLevel());
             if (!currentRightLane.getLevel() || currentRightHeight == 0) {
                 currentRightHeight = h;
             }
@@ -162,31 +131,17 @@ public class RoadMarkAreaGenerator extends AbstractAreaGenerator implements Area
             double sPolyWidth = sLocal - poly.getStTransform().getsOffset();
             double width = PolynomHelper.calcPolynomValue(poly, sPolyWidth);
             currentLeftWidth += width;
-            double projectedWidth = ElevationHelper.getProjectedWidth(
-                    sGlobal,
-                    currentLeftWidth,
-                    superelevation,
-                    currentLeftLane.getLevel()
-            );
-            double h = ElevationHelper.getElevation(
-                    sGlobal,
-                    currentLeftWidth,
-                    elevation,
-                    superelevation,
-                    currentLeftLane.getLevel()
-            );
+            double projectedWidth = ElevationHelper
+                    .getProjectedWidth(sGlobal, currentLeftWidth, superelevation, currentLeftLane.getLevel());
+            double h = ElevationHelper
+                    .getElevation(sGlobal, currentLeftWidth, elevation, superelevation, currentLeftLane.getLevel());
             if (!currentLeftLane.getLevel() || currentLeftHeight == 0) {
                 currentLeftHeight = h;
             }
             lsp.getLanes().get(i).add(pointFactory.getODRGeometryHandler(geom.getClass())
                     .sth2xyzPoint(geom, sGlobal, projectedWidth, currentLeftHeight));
         }
-        double projectedOffset = ElevationHelper.getProjectedWidth(
-                sGlobal,
-                offset,
-                superelevation,
-                false
-        );
+        double projectedOffset = ElevationHelper.getProjectedWidth(sGlobal, offset, superelevation, false);
         double h = ElevationHelper.getElevation(sGlobal, 0.0, elevation, superelevation);
         lsp.getLanes().get(0).add(pointFactory.getODRGeometryHandler(geom.getClass())
                 .sth2xyzPoint(geom, sGlobal, projectedOffset, h));

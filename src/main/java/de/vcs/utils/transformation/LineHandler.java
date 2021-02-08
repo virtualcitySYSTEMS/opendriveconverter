@@ -1,7 +1,9 @@
 package de.vcs.utils.transformation;
 
+import de.vcs.datatypes.RoadMarkPoint;
 import de.vcs.model.odr.geometry.AbstractODRGeometry;
 import de.vcs.model.odr.geometry.Line;
+import de.vcs.model.odr.lane.RoadMark;
 import de.vcs.utils.geometry.Transformation;
 import de.vcs.utils.math.LineHelper;
 import de.vcs.utils.math.ODRMath;
@@ -19,6 +21,22 @@ public class LineHandler implements ODRGeometryHandler {
                     line.getInertialReference().getPos().getValue().get(0),
                     line.getInertialReference().getPos().getValue().get(1));
             xyz.getCoordinate().setZ(h);
+            return xyz;
+        }
+        return null;
+    }
+
+    @Override
+    public RoadMarkPoint sth2xyzPoint(AbstractODRGeometry geom, double s, double t, double h, RoadMark roadMark) {
+        if (geom.getClass().equals(Line.class)) {
+            Line line = (Line) geom;
+            double ds = s - line.getLinearReference().getS();
+            Point point = LineHelper.calcUVPoint(line, ds, t);
+            RoadMarkPoint xyz = (RoadMarkPoint) Transformation.transform(point, line.getIntertialTransform().getHdg(),
+                    line.getInertialReference().getPos().getValue().get(0),
+                    line.getInertialReference().getPos().getValue().get(1));
+            xyz.getCoordinate().setZ(h);
+            xyz.setRoadMark(roadMark);
             return xyz;
         }
         return null;
