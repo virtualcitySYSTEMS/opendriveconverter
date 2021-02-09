@@ -7,6 +7,7 @@ import de.vcs.model.odr.lane.RoadMark;
 import de.vcs.utils.geometry.Transformation;
 import de.vcs.utils.math.LineHelper;
 import de.vcs.utils.math.ODRMath;
+import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
 
 public class LineHandler implements ODRGeometryHandler {
@@ -27,17 +28,19 @@ public class LineHandler implements ODRGeometryHandler {
     }
 
     @Override
-    public RoadMarkPoint sth2xyzPoint(AbstractODRGeometry geom, double s, double t, double h, RoadMark roadMark) {
+    public RoadMarkPoint sth2xyzPoint(AbstractODRGeometry geom, double s, double t, double h, RoadMark roadMark,
+            GeometryFactory factory) {
         if (geom.getClass().equals(Line.class)) {
             Line line = (Line) geom;
             double ds = s - line.getLinearReference().getS();
             Point point = LineHelper.calcUVPoint(line, ds, t);
-            RoadMarkPoint xyz = (RoadMarkPoint) Transformation.transform(point, line.getIntertialTransform().getHdg(),
+            Point xyz = (Point) Transformation.transform(point, line.getIntertialTransform().getHdg(),
                     line.getInertialReference().getPos().getValue().get(0),
                     line.getInertialReference().getPos().getValue().get(1));
             xyz.getCoordinate().setZ(h);
-            xyz.setRoadMark(roadMark);
-            return xyz;
+            RoadMarkPoint rmp = new RoadMarkPoint(xyz.getCoordinateSequence(), factory);
+            rmp.setRoadMark(roadMark);
+            return rmp;
         }
         return null;
     }

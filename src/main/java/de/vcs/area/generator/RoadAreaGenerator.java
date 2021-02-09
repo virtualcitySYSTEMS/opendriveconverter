@@ -3,7 +3,6 @@ package de.vcs.area.generator;
 import de.vcs.area.odrgeometryfactory.ODRGeometryFactory;
 import de.vcs.constants.JTSConstants;
 import de.vcs.datatypes.LaneSectionParameters;
-import de.vcs.datatypes.RoadMarkPoint;
 import de.vcs.model.odr.geometry.AbstractODRGeometry;
 import de.vcs.model.odr.geometry.AbstractSTGeometry;
 import de.vcs.model.odr.geometry.Polynom;
@@ -31,10 +30,12 @@ public class RoadAreaGenerator extends AbstractAreaGenerator implements AreaGene
     ArrayList<Double> sRunner;
     double step = 0.2;
     PointFactory pointFactory;
+    GeometryFactory factory;
 
     public RoadAreaGenerator(Road road) {
         this.road = road;
         pointFactory = new PointFactory();
+        factory = new GeometryFactory();
     }
 
     @Override
@@ -129,7 +130,7 @@ public class RoadAreaGenerator extends AbstractAreaGenerator implements AreaGene
             maxLaneID = ls.getLeftLanes().lastKey();
         } catch (NoSuchElementException e) {
         }
-        initLSPTreeMap(minLaneID, maxLaneID, lsp);
+        lsp.initLSPTreeMap(minLaneID, maxLaneID);
         //right lanes
         double currentRightWidth = offset;
         double currentRightHeight = 0;
@@ -148,14 +149,10 @@ public class RoadAreaGenerator extends AbstractAreaGenerator implements AreaGene
             }
             //RoadMarkParameter
             if (!currentRightLane.getRoadMarks().isEmpty()) {
-                try {
-                    RoadMark roadMark = currentRightLane.getRoadMarks().floorEntry(sLocal).getValue();
-                    RoadMarkHelper
-                            .addRoadMarkPoints(lsp, i, pointFactory, geom, sGlobal, projectedWidth, currentRightHeight,
-                                    roadMark);
-                } catch (Exception e) {
-                    ODRLogger.getInstance().error("Cannnot add RoadMarkPoint " + road.getId());
-                }
+                RoadMark roadMark = currentRightLane.getRoadMarks().floorEntry(sLocal).getValue();
+                RoadMarkHelper
+                        .addRoadMarkPoints(lsp, i, pointFactory, geom, sGlobal, projectedWidth, currentRightHeight,
+                                roadMark, factory);
             }
             lsp.getLanes().get(i).add(pointFactory.getODRGeometryHandler(geom.getClass())
                     .sth2xyzPoint(geom, sGlobal, projectedWidth, currentRightHeight));
@@ -177,14 +174,9 @@ public class RoadAreaGenerator extends AbstractAreaGenerator implements AreaGene
             }
             //RoadMarkParameter
             if (!currentLeftLane.getRoadMarks().isEmpty()) {
-                try {
-                    RoadMark roadMark = currentLeftLane.getRoadMarks().floorEntry(sLocal).getValue();
-                    RoadMarkHelper
-                            .addRoadMarkPoints(lsp, i, pointFactory, geom, sGlobal, projectedWidth, currentRightHeight,
-                                    roadMark);
-                } catch (Exception e) {
-                    ODRLogger.getInstance().error("Cannnot add RoadMarkPoint " + road.getId());
-                }
+                RoadMark roadMark = currentLeftLane.getRoadMarks().floorEntry(sLocal).getValue();
+                RoadMarkHelper.addRoadMarkPoints(lsp, i, pointFactory, geom, sGlobal, projectedWidth, currentLeftHeight,
+                        roadMark, factory);
             }
             lsp.getLanes().get(i).add(pointFactory.getODRGeometryHandler(geom.getClass())
                     .sth2xyzPoint(geom, sGlobal, projectedWidth, currentLeftHeight));
@@ -193,22 +185,6 @@ public class RoadAreaGenerator extends AbstractAreaGenerator implements AreaGene
         double h = ElevationHelper.getElevation(sGlobal, 0.0, elevation, superelevation);
         lsp.getLanes().get(0).add(pointFactory.getODRGeometryHandler(geom.getClass())
                 .sth2xyzPoint(geom, sGlobal, projectedOffset, h));
-    }
-
-    private void initLSPTreeMap(int minLaneID, int maxLaneID, LaneSectionParameters lsp) {
-        for (int i = minLaneID; i <= maxLaneID; i++) {
-            if (!isLSPTreeMap(i, lsp)) {
-                lsp.getLanes().put(i, new ArrayList<>());
-            }
-        }
-    }
-
-    private boolean isLSPTreeMap(int key, LaneSectionParameters lsp) {
-        if (lsp.getLanes().get(key) == null) {
-            return false;
-        } else {
-            return true;
-        }
     }
 
     private void createCenterLine(LaneSection ls, LaneSectionParameters lsp) {

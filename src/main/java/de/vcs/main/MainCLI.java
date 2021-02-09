@@ -41,10 +41,10 @@ public class MainCLI {
 
     public static void main(String[] args) {
         try {
-//            MainCLI mainCLI = new MainCLI("src/main/resources/2020-06-19_SAVe_Ingolstadt_Prio4.xodr",
-//                    "src/main/resources/2020-06-19_SAVe_Ingolstadt_Prio4");
-            MainCLI mainCLI = new MainCLI("src/main/resources/2020-09-21_SAVe_Ingolstadt_Update2_Prio1-6.xodr",
-                    "src/main/resources/2020-09-21_SAVe_Ingolstadt_Update2_Prio1-6");
+            MainCLI mainCLI = new MainCLI("src/main/resources/2020-06-19_SAVe_Ingolstadt_Prio4.xodr",
+                    "src/main/resources/2020-06-19_SAVe_Ingolstadt_Prio4");
+//            MainCLI mainCLI = new MainCLI("src/main/resources/2020-09-21_SAVe_Ingolstadt_Update2_Prio1-6.xodr",
+//                    "src/main/resources/2020-09-21_SAVe_Ingolstadt_Update2_Prio1-6");
             mainCLI.doMain();
         } catch (Exception e) {
             e.printStackTrace();
@@ -107,8 +107,7 @@ public class MainCLI {
                     new File(outputFile, "refLine.json")));
             converters.add(new GeoJsonConverter(GeoJsonConverter::convertLaneBreakLines,
                     new File(outputFile, "breakLines.json")));
-            converters.add(new GeoJsonConverter(GeoJsonConverter::convertRoads,
-                    new File(outputFile, "roads.json")));
+            converters.add(new GeoJsonConverter(GeoJsonConverter::convertRoads, new File(outputFile, "roads.json")));
             converters.add(new GeoJsonConverter(GeoJsonConverter::convertLanes, new File(outputFile, "lanes.json")));
             converters
                     .add(new GeoJsonConverter(GeoJsonConverter::convertObjects, new File(outputFile, "objects.json")));

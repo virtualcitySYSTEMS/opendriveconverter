@@ -9,6 +9,7 @@ import de.vcs.utils.geometry.Transformation;
 import de.vcs.utils.math.ODRMath;
 import de.vcs.utils.math.ParamPolynomHelper;
 import de.vcs.utils.math.PolynomHelper;
+import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
 
 public class PolyHandler implements ODRGeometryHandler {
@@ -29,17 +30,19 @@ public class PolyHandler implements ODRGeometryHandler {
     }
 
     @Override
-    public RoadMarkPoint sth2xyzPoint(AbstractODRGeometry geom, double s, double t, double h, RoadMark roadMark) {
+    public RoadMarkPoint sth2xyzPoint(AbstractODRGeometry geom, double s, double t, double h, RoadMark roadMark,
+            GeometryFactory factory) {
         if (geom.getClass().equals(Polynom.class)) {
             Polynom poly = (Polynom) geom;
             double ds = s - poly.getLinearReference().getS();
             Point point = PolynomHelper.calcUVPoint(poly, ds, t);
-            RoadMarkPoint xyz = (RoadMarkPoint) Transformation.transform(point, poly.getIntertialTransform().getHdg(),
+            Point xyz = (Point) Transformation.transform(point, poly.getIntertialTransform().getHdg(),
                     poly.getInertialReference().getPos().getValue().get(0),
                     poly.getInertialReference().getPos().getValue().get(1));
             xyz.getCoordinate().setZ(h);
-            xyz.setRoadMark(roadMark);
-            return xyz;
+            RoadMarkPoint rmp = new RoadMarkPoint(xyz.getCoordinateSequence(), factory);
+            rmp.setRoadMark(roadMark);
+            return rmp;
         }
         return null;
     }
