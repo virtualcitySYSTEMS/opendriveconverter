@@ -35,6 +35,7 @@ public class MainCLI {
     ODRLogger log;
 
     public MainCLI(String odrFileName, String outFileName) {
+        System.setProperty("hsqldb.reconfig_logging", "false");
         this.odrFile = new File(odrFileName);
         this.outputFile = new File(outFileName);
     }
@@ -88,6 +89,7 @@ public class MainCLI {
             areaWorkerPool.addWork(new SignalAreaGenerator(o));
         });
         try {
+            areaWorkerPool.awaitQueueEmpty();
             areaWorkerPool.shutdownAndWait();
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -117,6 +119,8 @@ public class MainCLI {
                     new File(outputFile, "laneSections.json")));
             converters.add(new GeoJsonConverter(GeoJsonConverter::convertJunctions,
                     new File(outputFile, "junctions.json")));
+            converters.add(new GeoJsonConverter(GeoJsonConverter::convertRoadMarks,
+                    new File(outputFile, "roadMarks.json")));
             // TODO: converters.add(new CityGMLConverter(CityGMLConverter::convertRoads));
             converters.forEach(c -> {
                 try {
@@ -131,8 +135,7 @@ public class MainCLI {
     }
 
     private void printGML() {
-        odr.getRoads().get(0).getGmlGeometries().forEach(g -> {
-            System.out.println(g.getCoordinate().getX());
-        });
+        System.out.println("finish");
+        System.out.flush();
     }
 }

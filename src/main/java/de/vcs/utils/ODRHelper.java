@@ -3,6 +3,7 @@ package de.vcs.utils;
 import de.vcs.model.odr.lane.Lane;
 import de.vcs.model.odr.lane.LaneSection;
 
+import java.util.ArrayList;
 import java.util.TreeMap;
 
 public class ODRHelper {
@@ -14,4 +15,11 @@ public class ODRHelper {
         return lanes;
     }
 
+    public static <newType, oldType> ArrayList<newType> castArrayList(ArrayList<oldType> list) {
+        ArrayList<newType> newlyCastedArrayList = new ArrayList<newType>();
+        for (oldType listObject : list) {
+            newlyCastedArrayList.add((newType) listObject);
+        }
+        return newlyCastedArrayList;
+    }
 }

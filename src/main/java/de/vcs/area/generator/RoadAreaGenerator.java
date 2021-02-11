@@ -40,7 +40,7 @@ public class RoadAreaGenerator extends AbstractAreaGenerator implements AreaGene
 
     @Override
     public void generateArea() {
-        validateRoadGeometry();
+        //validateRoadGeometry();
         applySRunner();
     }
 
@@ -95,6 +95,7 @@ public class RoadAreaGenerator extends AbstractAreaGenerator implements AreaGene
                 createCenterLine(ls, lsp);
 //                createLanePolygons(ls, lsp);
                 createLanePolygons3D(ls, lsp);
+                RoadMarkHelper.createRoadMarkPolygons3D(ls, lsp);
             }
         });
     }
