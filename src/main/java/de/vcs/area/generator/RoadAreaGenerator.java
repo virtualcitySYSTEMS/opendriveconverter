@@ -148,7 +148,6 @@ public class RoadAreaGenerator extends AbstractAreaGenerator implements AreaGene
             if (!currentRightLane.getLevel() || currentRightHeight == 0) {
                 currentRightHeight = h;
             }
-            //RoadMarkParameter
             if (!currentRightLane.getRoadMarks().isEmpty()) {
                 RoadMark roadMark = currentRightLane.getRoadMarks().floorEntry(sLocal).getValue();
                 RoadMarkHelper
@@ -158,6 +157,7 @@ public class RoadAreaGenerator extends AbstractAreaGenerator implements AreaGene
             lsp.getLanes().get(i).add(pointFactory.getODRGeometryHandler(geom.getClass())
                     .sth2xyzPoint(geom, sGlobal, projectedWidth, currentRightHeight));
         }
+        //left lanes
         double currentLeftWidth = offset;
         double currentLeftHeight = 0;
         for (int i = 1; i <= maxLaneID; i++) {
@@ -183,9 +183,14 @@ public class RoadAreaGenerator extends AbstractAreaGenerator implements AreaGene
                     .sth2xyzPoint(geom, sGlobal, projectedWidth, currentLeftHeight));
         }
         double projectedOffset = ElevationHelper.getProjectedWidth(sGlobal, offset, superelevation, false);
-        double h = ElevationHelper.getElevation(sGlobal, 0.0, elevation, superelevation);
+        double h = ElevationHelper.getElevation(sGlobal, offset, elevation, superelevation);
         lsp.getLanes().get(0).add(pointFactory.getODRGeometryHandler(geom.getClass())
                 .sth2xyzPoint(geom, sGlobal, projectedOffset, h));
+        if (!ls.getCenterLane().getRoadMarks().isEmpty()) {
+            RoadMark roadMark = ls.getCenterLane().getRoadMarks().floorEntry(sLocal).getValue();
+            RoadMarkHelper
+                    .addRoadMarkPoints(lsp, 0, pointFactory, geom, sGlobal, projectedOffset, h, roadMark, factory);
+        }
     }
 
     private void createCenterLine(LaneSection ls, LaneSectionParameters lsp) {

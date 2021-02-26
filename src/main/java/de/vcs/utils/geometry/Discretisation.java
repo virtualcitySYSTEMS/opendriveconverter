@@ -2,14 +2,43 @@ package de.vcs.utils.geometry;
 
 import de.vcs.model.odr.geometry.AbstractODRGeometry;
 import de.vcs.model.odr.geometry.Polynom;
+import de.vcs.model.odr.lane.LaneSection;
 import de.vcs.model.odr.road.Road;
 import de.vcs.utils.log.ODRLogger;
 import de.vcs.utils.math.PolynomHelper;
 import org.locationtech.jts.geom.Point;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.stream.Collectors;
 
 public class Discretisation {
+
+    public static ArrayList<Double> generateSRunner(double step, double roadLength, LaneSection ls) {
+        ArrayList<Double> sDuplicates = generateSRunner(step, roadLength, 0.0);
+        ls.getLeftLanes().values().stream().forEach(l -> {
+            if (!l.getRoadMarks().isEmpty()) {
+                l.getRoadMarks().keySet().forEach(key -> {
+                    sDuplicates.add(key);
+                });
+            }
+        });
+        ls.getRightLanes().values().stream().forEach(l -> {
+            if (!l.getRoadMarks().isEmpty()) {
+                l.getRoadMarks().keySet().forEach(key -> {
+                    sDuplicates.add(key);
+                });
+            }
+        });
+        if (!ls.getCenterLane().getRoadMarks().isEmpty()) {
+            ls.getCenterLane().getRoadMarks().keySet().forEach(key -> {
+                sDuplicates.add(key);
+            });
+        }
+        ArrayList<Double> sFinal = (ArrayList<Double>) sDuplicates.stream().distinct().collect(Collectors.toList());
+        Collections.sort(sFinal);
+        return sFinal;
+    }
 
     public static ArrayList<Double> generateSRunner(double step, double roadLength) {
         return generateSRunner(step, roadLength, 0.0);

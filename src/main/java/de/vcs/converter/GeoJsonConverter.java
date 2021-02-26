@@ -171,7 +171,7 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
                 for (Map.Entry<Double, LaneSection> e : road.getLanes().getLaneSections().entrySet()) {
                     Double s = e.getKey();
                     LaneSection laneSection = e.getValue();
-                    for (Map.Entry<Integer, Lane> entry : ODRHelper.getLanes(laneSection).entrySet()) {
+                    for (Map.Entry<Integer, Lane> entry : ODRHelper.getLanesWithCenterLane(laneSection).entrySet()) {
                         Lane lane = entry.getValue();
                         for (Map.Entry<Double, RoadMark> roadMarkEntry : lane.getRoadMarks().entrySet()) {
                             RoadMark roadMark = roadMarkEntry.getValue();
