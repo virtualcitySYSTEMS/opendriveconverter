@@ -34,6 +34,9 @@ public class RoadMarkHelper {
         if (roadMark.getWidth() > 0.0) {
             roadmarkWidth = roadMark.getWidth() / 2.0;
         }
+        if (roadMark.getType() == null) {
+            return;
+        }
         switch (roadMark.getType()) {
             case RoadMarkConstants.SOLID:
 //            case RoadMarkConstants.CUSTOM:
