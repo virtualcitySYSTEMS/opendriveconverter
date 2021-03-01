@@ -24,7 +24,7 @@ public class RoadMarkGeometryFactory {
         } else if (type.equalsIgnoreCase(RoadMarkConstants.CURB)) {
             return new RoadMarkSolid().createRoadMark(points);
         } else if (type.equalsIgnoreCase(RoadMarkConstants.BROKEN)) {
-            return new RoadMarkSolid().createRoadMark(points);
+            return new RoadMarkBroken().createRoadMark(points);
         } else {
             return null;
         }

@@ -16,6 +16,7 @@ import de.vcs.utils.constants.RoadMarkConstants;
 import de.vcs.utils.geometry.Transformation;
 import de.vcs.utils.log.ODRLogger;
 import de.vcs.utils.transformation.PointFactory;
+import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
@@ -40,6 +41,7 @@ public class RoadMarkHelper {
             case RoadMarkConstants.BROKEN:
 //            case RoadMarkConstants.GRASS:
 //            case RoadMarkConstants.CURB:
+            case RoadMarkConstants.NONE:
                 lsp.getSingleLaneRoadMark().get(laneID).add(pointFactory.getODRGeometryHandler(geom.getClass())
                         .sth2xyzPoint(geom, sGlobal, width - roadmarkWidth, height, roadMark, factory));
                 lsp.getSingleLaneRoadMark().get(laneID).add(pointFactory.getODRGeometryHandler(geom.getClass())
@@ -87,7 +89,7 @@ public class RoadMarkHelper {
                 for (int j = 0; j < lsp.getSingleLaneRoadMark().get(i).size() - 1; j++) {
                     RoadMarkPoint rmp = lsp.getSingleLaneRoadMark().get(i).get(j);
                     currentRMType = rmp.getRoadMark().getType();
-                    if (!currentRMType.equals(preRMType)) {
+                    if (!currentRMType.equals(preRMType) & !preRMType.equals(RoadMarkConstants.NONE)) {
                         //hier polygon erzeugen und an roadmark haengen
                         isSingleRoadMark = false;
                         rmpPointsDown.add(lsp.getSingleLaneRoadMark().get(i).get(j));
@@ -96,7 +98,7 @@ public class RoadMarkHelper {
                         rmpPointsDown.addAll(rmpPointsUp);
                         rmpPointsDown.add(rmpPointsDown.get(0));
                         double sRoradMark = rmpPointsDown.get(0).getRoadMark().getStTransform().getsOffset();
-                        Polygon polygon = (Polygon) RoadMarkGeometryFactory.createRoadMark(preRMType, rmpPointsDown);
+                        Geometry polygon = RoadMarkGeometryFactory.createRoadMark(preRMType, rmpPointsDown);
                         try {
                             if (i < 0) {
                                 ls.getRightLanes().get(i).getRoadMarks().get(sRoradMark).getGmlGeometries()
@@ -121,7 +123,7 @@ public class RoadMarkHelper {
                     }
                     preRMType = currentRMType;
                 }
-                if (isSingleRoadMark) {
+                if (isSingleRoadMark & !preRMType.equals(RoadMarkConstants.NONE)) {
                     //hier polygon erzeugen und an roadmark haengen
                     rmpPointsUp
                             .add(lsp.getSingleLaneRoadMark().get(i).get(lsp.getSingleLaneRoadMark().get(i).size() - 1));
@@ -129,7 +131,7 @@ public class RoadMarkHelper {
                     rmpPointsDown.addAll(rmpPointsUp);
                     rmpPointsDown.add(rmpPointsDown.get(0));
                     double sRoradMark = rmpPointsDown.get(0).getRoadMark().getStTransform().getsOffset();
-                    Polygon polygon = (Polygon) RoadMarkGeometryFactory.createRoadMark(currentRMType, rmpPointsDown);
+                    Geometry polygon = RoadMarkGeometryFactory.createRoadMark(currentRMType, rmpPointsDown);
                     try {
                         if (i < 0) {
                             ls.getRightLanes().get(i).getRoadMarks().floorEntry(sRoradMark).getValue()
