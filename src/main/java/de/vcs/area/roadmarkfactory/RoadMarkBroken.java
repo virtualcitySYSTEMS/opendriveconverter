@@ -17,7 +17,7 @@ public class RoadMarkBroken implements RoadMarkGeometry {
         if (points.size() > 12) {
             ArrayList<RoadMarkPoint> pointsUp = new ArrayList<>();
             ArrayList<RoadMarkPoint> pointsDown = new ArrayList<>();
-            ArrayList<Polygon> polys = new ArrayList<Polygon>();
+            ArrayList<Polygon> polys = new ArrayList<>();
             preparePointsArray(points, pointsUp, pointsDown);
             if (pointsUp.size() == pointsDown.size()) {
                 for (int i = 0; i < pointsDown.size() - 11; i += 12) {
