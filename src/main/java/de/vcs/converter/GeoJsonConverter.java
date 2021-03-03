@@ -184,6 +184,7 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
                                             JSONObject feature = createFeature(f);
                                             JSONObject properties = getProperties(roadMark);
                                             properties.put("roadId", road.getId());
+                                            properties.put("laneId", lane.getId());
                                             properties.put("sOffset", s);
                                             feature.put("properties", properties);
                                             geojson.getFeatures().add(feature);

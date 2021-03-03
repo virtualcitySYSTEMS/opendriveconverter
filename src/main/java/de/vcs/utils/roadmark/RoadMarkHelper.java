@@ -39,11 +39,11 @@ public class RoadMarkHelper {
         }
         switch (roadMark.getType()) {
             case RoadMarkConstants.SOLID:
-//            case RoadMarkConstants.CUSTOM:
-//            case RoadMarkConstants.EDGE:
+            case RoadMarkConstants.CUSTOM:
+            case RoadMarkConstants.EDGE:
             case RoadMarkConstants.BROKEN:
-//            case RoadMarkConstants.GRASS:
-//            case RoadMarkConstants.CURB:
+            case RoadMarkConstants.GRASS:
+            case RoadMarkConstants.CURB:
             case RoadMarkConstants.NONE:
                 lsp.getSingleLaneRoadMark().get(laneID).add(pointFactory.getODRGeometryHandler(geom.getClass())
                         .sth2xyzPoint(geom, sGlobal, width - roadmarkWidth, height, roadMark, factory));
