@@ -4,10 +4,12 @@ import de.vcs.model.odr.core.AbstractOpenDriveElement;
 import de.vcs.model.odr.core.OpenDRIVE;
 import de.vcs.model.odr.lane.Lane;
 import de.vcs.model.odr.lane.LaneSection;
+import de.vcs.model.odr.lane.RoadMark;
 import de.vcs.model.odr.object.*;
 import de.vcs.model.odr.signal.Signal;
 import de.vcs.model.odr.road.Road;
 import de.vcs.utils.ODRHelper;
+import de.vcs.utils.constants.RoadMarkConstants;
 import de.vcs.utils.geometry.Transformation;
 import de.vcs.utils.log.ODRLogger;
 import org.apache.commons.lang3.ClassUtils;
@@ -25,6 +27,7 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.referencing.operation.TransformException;
 import org.locationtech.jts.io.geojson.*;
 
+import javax.validation.constraints.Null;
 import java.io.*;
 import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
@@ -53,7 +56,6 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
         try {
             sourceCRS = factory.createCoordinateReferenceSystem("EPSG:25832");
             targetCRS = factory.createCoordinateReferenceSystem("EPSG:4326");
-
             for (Road road : odr.getRoads()) {
                 road.getLanes().getLaneSections().values().forEach(ls -> {
                     ArrayList<Geometry> lines = ls.getCenterLane().getGmlGeometries();
@@ -65,7 +67,8 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
                     }
                     lines.stream().forEach(f -> {
                         JSONObject feature = createFeature(f);
-                        JSONObject properties = getProperties(ls);
+                        //TODO check if properties of geometries is causing issue
+                        JSONObject properties = getProperties(ls.getCenterLane());
                         properties.put("roadId", road.getId());
                         properties.put("name", road.getName());
                         properties.put("sOffset", ls.getLinearReference().getS());
@@ -104,8 +107,7 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
                             Coordinate[] coords = f.getCoordinates();
                             int from = lane.getId() < 0 ? 0 : coords.length / 2;
                             int to = lane.getId() < 0 ? coords.length / 2 : coords.length - 1;
-                            LineString line =
-                                    geometryFactory.createLineString(Arrays.copyOfRange(coords, from, to));
+                            LineString line = geometryFactory.createLineString(Arrays.copyOfRange(coords, from, to));
                             JSONObject feature = createFeature(line);
                             JSONObject properties = getProperties(lane);
                             properties.put("roadId", road.getId());
@@ -157,6 +159,57 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
      * @param odr - OpenDRIVE data
      * @return GeoJSON feature list of lane polygons
      */
+    public static GeoJsonFormat convertRoadMarks(OpenDRIVE odr) {
+        GeoJsonFormat geojson = new GeoJsonFormat();
+        CoordinateReferenceSystem sourceCRS;
+        CoordinateReferenceSystem targetCRS;
+        CRSAuthorityFactory factory = CRS.getAuthorityFactory(true);
+        try {
+            sourceCRS = factory.createCoordinateReferenceSystem("EPSG:25832");
+            targetCRS = factory.createCoordinateReferenceSystem("EPSG:4326");
+            for (Road road : odr.getRoads()) {
+                for (Map.Entry<Double, LaneSection> e : road.getLanes().getLaneSections().entrySet()) {
+                    Double s = e.getKey();
+                    LaneSection laneSection = e.getValue();
+                    for (Map.Entry<Integer, Lane> entry : ODRHelper.getLanesWithCenterLane(laneSection).entrySet()) {
+                        Lane lane = entry.getValue();
+                        for (Map.Entry<Double, RoadMark> roadMarkEntry : lane.getRoadMarks().entrySet()) {
+                            RoadMark roadMark = roadMarkEntry.getValue();
+                            ArrayList<Geometry> geometries = roadMarkEntry.getValue().getGmlGeometries();
+                            if (!geometries.isEmpty()) {
+                                try {
+                                    geometries = Transformation.crsTransform(geometries, sourceCRS, targetCRS);
+                                    if (!geometries.isEmpty()) {
+                                        geometries.stream().forEach(f -> {
+                                            JSONObject feature = createFeature(f);
+                                            JSONObject properties = getProperties(roadMark);
+                                            properties.put("roadId", road.getId());
+                                            properties.put("laneId", lane.getId());
+                                            properties.put("sOffset", s);
+                                            feature.put("properties", properties);
+                                            geojson.getFeatures().add(feature);
+                                        });
+                                    }
+                                } catch (NullPointerException | TransformException ex) {
+                                    ex.printStackTrace();
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (FactoryException e) {
+            e.printStackTrace();
+        }
+        return geojson;
+    }
+
+    /**
+     * Creates a top level feature for each OpenDRIVE Lane represented by its area
+     *
+     * @param odr - OpenDRIVE data
+     * @return GeoJSON feature list of lane polygons
+     */
     public static GeoJsonFormat convertLanes(OpenDRIVE odr) {
         GeoJsonFormat geojson = new GeoJsonFormat();
         CoordinateReferenceSystem sourceCRS;
@@ -175,16 +228,16 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
                             break;
                         }
 //                        if (lane.getType().equals("driving")) {
-                            ArrayList<Geometry> geometries = lane.getGmlGeometries();
-                            geometries = Transformation.crsTransform(geometries, sourceCRS, targetCRS);
-                            geometries.stream().forEach(f -> {
-                                JSONObject feature = createFeature(f);
-                                JSONObject properties = getProperties(lane);
-                                properties.put("roadId", road.getId());
-                                properties.put("sOffset", s);
-                                feature.put("properties", properties);
-                                geojson.getFeatures().add(feature);
-                            });
+                        ArrayList<Geometry> geometries = lane.getGmlGeometries();
+                        geometries = Transformation.crsTransform(geometries, sourceCRS, targetCRS);
+                        geometries.stream().forEach(f -> {
+                            JSONObject feature = createFeature(f);
+                            JSONObject properties = getProperties(lane);
+                            properties.put("roadId", road.getId());
+                            properties.put("sOffset", s);
+                            feature.put("properties", properties);
+                            geojson.getFeatures().add(feature);
+                        });
 //                        }
                     }
                 }
@@ -232,6 +285,7 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
     /**
      * Creates a top level feature for each OpenDRIVE Junction represented by its area
      * //TODO junction properties missing, better approach see JunctionAreaProcessor
+     *
      * @param odr - OpenDRIVE data
      * @return GeoJSON feature list of junction polygons
      */
@@ -281,9 +335,9 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
 //                    }
 //                } catch (TopologyException e) {
 //                    ODRLogger.getInstance().warn(e.getMessage());
-                    junctionGeometry = geometryFactory.createMultiPolygon(polygons.toArray(new Polygon[polygons.size()]));
-                    // skips overlapping polygons -> FME Buffer is better!
-                    // junctionGeometry = junctionGeometry.buffer(0);
+                junctionGeometry = geometryFactory.createMultiPolygon(polygons.toArray(new Polygon[polygons.size()]));
+                // skips overlapping polygons -> FME Buffer is better!
+                // junctionGeometry = junctionGeometry.buffer(0);
 //                }
                 junctionGeometry = Transformation.crsTransform(junctionGeometry, sourceCRS, targetCRS);
                 JSONObject feature = createFeature(junctionGeometry);
@@ -419,6 +473,7 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
 
     /**
      * gets feature properties of OpenDRIVE Element
+     *
      * @param element - an OpenDRIVE Element
      * @return feature properties
      */
@@ -439,17 +494,19 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
                     ArrayList<?> arrayList = (ArrayList<?>) f.get(element);
                     if (arrayList != null) {
                         arrayList.forEach(v -> {
-                            if (ClassUtils.isPrimitiveOrWrapper(v.getClass())) {
-                                array.add(v);
-                            } else if (v instanceof AbstractOpenDriveElement){
-                                array.add(getProperties((AbstractOpenDriveElement) v));
+                            if (!(v == null)) {
+                                if (ClassUtils.isPrimitiveOrWrapper(v.getClass())) {
+                                    array.add(v);
+                                } else if (v instanceof AbstractOpenDriveElement) {
+                                    array.add(getProperties((AbstractOpenDriveElement) v));
+                                }
                             }
                         });
                         if (!array.isEmpty()) {
                             properties.put(f.getName(), array);
                         }
                     }
-                }catch (IllegalAccessException e) {
+                } catch (IllegalAccessException e) {
                     e.printStackTrace();
                 }
             } else if (f.getType().isAssignableFrom(TreeMap.class)) {
@@ -460,7 +517,7 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
                         map.forEach((k, v) -> {
                             if (ClassUtils.isPrimitiveOrWrapper(v.getClass())) {
                                 array.add(v);
-                            } else if (v instanceof AbstractOpenDriveElement){
+                            } else if (v instanceof AbstractOpenDriveElement) {
                                 array.add(getProperties((AbstractOpenDriveElement) v));
                             }
                         });
@@ -468,7 +525,7 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
                             properties.put(f.getName(), array);
                         }
                     }
-                }catch (IllegalAccessException e) {
+                } catch (IllegalAccessException e) {
                     e.printStackTrace();
                 }
             }
@@ -478,7 +535,6 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
 
     private static List<Field> getInheritedPrivateFields(Class<?> type) {
         List<Field> result = new ArrayList<Field>();
-
         Class<?> i = type;
         while (i != null && i != Object.class) {
             for (Field field : i.getDeclaredFields()) {
@@ -488,7 +544,6 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
             }
             i = i.getSuperclass();
         }
-
         return result;
     }
 }

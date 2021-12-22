@@ -20,6 +20,7 @@ import org.opengis.referencing.operation.MathTransform;
 import org.opengis.referencing.operation.TransformException;
 
 import java.util.ArrayList;
+import java.util.Objects;
 
 public class Transformation {
 
@@ -53,11 +54,14 @@ public class Transformation {
         GeoidTransformation geoidTransformation = GeoidTransformation.getInstance();
         ArrayList<Geometry> transformedGeometries = new ArrayList<>();
         MathTransform transform = CRS.findMathTransform(sourceCRS, targetCRS);
-        geoms.parallelStream().forEach(g -> {
-            try {
-                transformedGeometries.add(geoidTransformation.transformWGSGeoid(JTS.transform(g, transform)));
-            } catch (TransformException | FactoryException e) {
-                e.printStackTrace();
+        //TODO change to parallelStream !!!
+        geoms.stream().forEach(g -> {
+            if (!Objects.isNull(g)) {
+                try {
+                    transformedGeometries.add(geoidTransformation.transformWGSGeoid(JTS.transform(g, transform)));
+                } catch (TransformException | FactoryException e) {
+                    e.printStackTrace();
+                }
             }
         });
         return transformedGeometries;
