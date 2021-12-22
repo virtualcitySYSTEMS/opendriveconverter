@@ -2,6 +2,7 @@ package de.vcs.area.generator;
 
 import de.vcs.model.odr.geometry.AbstractODRGeometry;
 import de.vcs.model.odr.geometry.Polynom;
+import de.vcs.model.odr.object.Orientation;
 import de.vcs.model.odr.road.Road;
 import de.vcs.model.odr.signal.Signal;
 import de.vcs.utils.log.ODRLogger;
@@ -48,6 +49,9 @@ public class SignalAreaGenerator extends AbstractAreaGenerator implements AreaGe
         h += signal.getInertialTransform().getzOffset();
         Point point = pointFactory.getODRGeometryHandler(geom.getClass()).sth2xyzPoint(geom, s, t, h);
         double hdg = pointFactory.getODRGeometryHandler(geom.getClass()).calcHdg(geom, s);
+        if (signal.getOrientation() != null && signal.getOrientation().equals(Orientation.MINUS.toString())) {
+            hdg += Math.PI;
+        }
         signal.getInertialTransform().setHdg(hdg + signal.getStTransform().getHdg());
         return point;
     }
