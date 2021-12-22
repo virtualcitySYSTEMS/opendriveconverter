@@ -1,8 +1,6 @@
 package de.vcs.datatypes;
 
-import org.apache.commons.compress.archivers.ar.ArArchiveEntry;
 import org.locationtech.jts.geom.Point;
-import sun.reflect.generics.tree.Tree;
 
 import java.util.ArrayList;
 import java.util.TreeMap;

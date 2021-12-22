@@ -9,32 +9,25 @@ import de.vcs.model.odr.object.*;
 import de.vcs.model.odr.signal.Signal;
 import de.vcs.model.odr.road.Road;
 import de.vcs.utils.ODRHelper;
-import de.vcs.utils.constants.RoadMarkConstants;
 import de.vcs.utils.geometry.Transformation;
-import de.vcs.utils.log.ODRLogger;
 import org.apache.commons.lang3.ClassUtils;
-import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.referencing.CRS;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.locationtech.jts.geom.*;
-import org.locationtech.jts.operation.union.CascadedPolygonUnion;
 import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.crs.CRSAuthorityFactory;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.referencing.operation.TransformException;
 import org.locationtech.jts.io.geojson.*;
 
-import javax.validation.constraints.Null;
 import java.io.*;
 import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
 

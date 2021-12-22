@@ -1,25 +1,15 @@
 package de.vcs.utils.roadmark;
 
-import de.vcs.area.odrgeometryfactory.ODRGeometryFactory;
 import de.vcs.area.roadmarkfactory.RoadMarkGeometryFactory;
-import de.vcs.constants.JTSConstants;
 import de.vcs.datatypes.LaneSectionParameters;
 import de.vcs.datatypes.RoadMarkPoint;
 import de.vcs.model.odr.geometry.AbstractODRGeometry;
-import de.vcs.model.odr.geometry.Polynom;
-import de.vcs.model.odr.lane.Height;
-import de.vcs.model.odr.lane.Lane;
 import de.vcs.model.odr.lane.LaneSection;
 import de.vcs.model.odr.lane.RoadMark;
-import de.vcs.utils.ODRHelper;
 import de.vcs.utils.constants.RoadMarkConstants;
-import de.vcs.utils.geometry.Transformation;
-import de.vcs.utils.log.ODRLogger;
 import de.vcs.utils.transformation.PointFactory;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
-import org.locationtech.jts.geom.Point;
-import org.locationtech.jts.geom.Polygon;
 
 import java.util.ArrayList;
 import java.util.Collections;

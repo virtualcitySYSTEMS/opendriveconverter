@@ -42,8 +42,10 @@ public class MainCLI {
 
     public static void main(String[] args) {
         try {
-            MainCLI mainCLI = new MainCLI("src/main/resources/2020-06-19_SAVe_Ingolstadt_Prio4.xodr",
-                    "src/main/resources/2020-06-19_SAVe_Ingolstadt_Prio4");
+            MainCLI mainCLI = new MainCLI("src/main/resources/2021-10-26_1500_PLIMOS_Grafing_Prio1.xodr",
+                    "src/main/resources/2021-10-26_1500_PLIMOS_Grafing_Prio1");
+//            MainCLI mainCLI = new MainCLI("src/main/resources/2020-06-19_SAVe_Ingolstadt_Prio4.xodr",
+//                    "src/main/resources/2020-06-19_SAVe_Ingolstadt_Prio4");
 //            MainCLI mainCLI = new MainCLI("src/main/resources/2020-09-21_SAVe_Ingolstadt_Update2_Prio1-6.xodr",
 //                    "src/main/resources/2020-09-21_SAVe_Ingolstadt_Update2_Prio1-6");
             mainCLI.doMain();

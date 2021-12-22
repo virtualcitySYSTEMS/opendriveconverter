@@ -7,7 +7,6 @@ import de.vcs.model.odr.lane.RoadMark;
 import de.vcs.utils.geometry.Transformation;
 import de.vcs.utils.math.ArcHelper;
 import de.vcs.utils.math.ODRMath;
-import org.citygml4j.model.citygml.transportation.Road;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
 

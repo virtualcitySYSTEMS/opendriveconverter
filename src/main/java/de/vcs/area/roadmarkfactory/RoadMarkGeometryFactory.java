@@ -1,12 +1,8 @@
 package de.vcs.area.roadmarkfactory;
 
-import de.vcs.area.odrgeometryfactory.ODRLineString;
-import de.vcs.area.odrgeometryfactory.ODRPolygon;
-import de.vcs.constants.JTSConstants;
 import de.vcs.datatypes.RoadMarkPoint;
 import de.vcs.utils.constants.RoadMarkConstants;
 import org.locationtech.jts.geom.Geometry;
-import org.locationtech.jts.geom.Point;
 
 import java.util.ArrayList;
 

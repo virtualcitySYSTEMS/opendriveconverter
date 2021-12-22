@@ -6,7 +6,6 @@ import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Polygon;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collections;
 

@@ -4,8 +4,6 @@ import de.vcs.model.odr.geometry.AbstractODRGeometry;
 import de.vcs.model.odr.geometry.Polynom;
 import de.vcs.model.odr.lane.LaneSection;
 import de.vcs.model.odr.road.Road;
-import de.vcs.utils.log.ODRLogger;
-import de.vcs.utils.math.PolynomHelper;
 import org.locationtech.jts.geom.Point;
 
 import java.util.ArrayList;

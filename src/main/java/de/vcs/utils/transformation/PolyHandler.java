@@ -2,12 +2,10 @@ package de.vcs.utils.transformation;
 
 import de.vcs.datatypes.RoadMarkPoint;
 import de.vcs.model.odr.geometry.AbstractODRGeometry;
-import de.vcs.model.odr.geometry.ParamPolynom;
 import de.vcs.model.odr.geometry.Polynom;
 import de.vcs.model.odr.lane.RoadMark;
 import de.vcs.utils.geometry.Transformation;
 import de.vcs.utils.math.ODRMath;
-import de.vcs.utils.math.ParamPolynomHelper;
 import de.vcs.utils.math.PolynomHelper;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;

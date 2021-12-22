@@ -1,8 +1,6 @@
 package de.vcs.converter;
 
-import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-import org.opengis.feature.simple.SimpleFeature;
 
 import java.util.ArrayList;
 import java.util.List;

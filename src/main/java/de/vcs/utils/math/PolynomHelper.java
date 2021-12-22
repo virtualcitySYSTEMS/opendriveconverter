@@ -1,6 +1,5 @@
 package de.vcs.utils.math;
 
-import de.vcs.model.odr.geometry.ParamPolynom;
 import de.vcs.model.odr.geometry.Polynom;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
