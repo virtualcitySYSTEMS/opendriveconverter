@@ -69,6 +69,9 @@ public class ObjectAreaGenerator extends AbstractAreaGenerator {
         h += obj.getIntertialTransform().getzOffset();
         Point point = pointFactory.getODRGeometryHandler(geom.getClass()).sth2xyzPoint(geom, s, t, h);
         double hdg = pointFactory.getODRGeometryHandler(geom.getClass()).calcHdg(geom, s);
+        if (obj.getOrientation() != null && obj.getOrientation().equals(Orientation.MINUS.toString())) {
+            hdg += Math.PI / 2;
+        }
         obj.getIntertialTransform().setHdg(hdg + obj.getStTransform().getHdg());
         return point;
     }
