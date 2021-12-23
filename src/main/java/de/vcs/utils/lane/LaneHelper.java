@@ -23,6 +23,7 @@ import org.locationtech.jts.geom.Polygon;
 
 import java.util.ArrayList;
 import java.util.NoSuchElementException;
+import java.util.TreeMap;
 
 public class LaneHelper {
 
@@ -113,13 +114,13 @@ public class LaneHelper {
         AbstractODRGeometry geom = road.getPlanView().getOdrGeometries().floorEntry(sGlobal).getValue();
         Polynom elevation = (Polynom) road.getElevationProfile().getElevations().floorEntry(sGlobal).getValue();
         Polynom superelevation = null;
-        try {
+        if (!road.getLateralProfile().getSuperElevations().isEmpty()) {
             superelevation = (Polynom) road.getLateralProfile().getSuperElevations().floorEntry(sGlobal).getValue();
-        } catch (Exception e) {
-            ODRLogger.getInstance()
-                    .error("Error creating RoadArea. Found no superelevation for road with id " + road.getId());
         }
-        // TODO shape
+        TreeMap<Double, TreeMap<Double, AbstractODRGeometry>> shapes = null;
+        if (!road.getLateralProfile().getShapes().isEmpty()) {
+            shapes = road.getLateralProfile().getShapes();
+        }
         double offset = 0.0;
         if (road.getLanes().getLaneOffsets().isEmpty()) {
             offset = 0.0;
@@ -152,7 +153,7 @@ public class LaneHelper {
             double projectedWidth = ElevationHelper
                     .getProjectedWidth(sGlobal, currentRightWidth, superelevation, currentRightLane.getLevel());
             double h = ElevationHelper
-                    .getElevation(sGlobal, currentRightWidth, elevation, superelevation, currentRightLane.getLevel());
+                    .getElevation(sGlobal, currentRightWidth, elevation, superelevation, shapes, currentRightLane.getLevel());
             if (!currentRightLane.getLevel() || currentRightHeight == 0) {
                 currentRightHeight = h;
             }
@@ -177,7 +178,7 @@ public class LaneHelper {
             double projectedWidth = ElevationHelper
                     .getProjectedWidth(sGlobal, currentLeftWidth, superelevation, currentLeftLane.getLevel());
             double h = ElevationHelper
-                    .getElevation(sGlobal, currentLeftWidth, elevation, superelevation, currentLeftLane.getLevel());
+                    .getElevation(sGlobal, currentLeftWidth, elevation, superelevation, shapes, currentLeftLane.getLevel());
             if (!currentLeftLane.getLevel() || currentLeftHeight == 0) {
                 currentLeftHeight = h;
             }
@@ -191,7 +192,7 @@ public class LaneHelper {
                     .sth2xyzPoint(geom, sGlobal, projectedWidth, currentLeftHeight));
         }
         double projectedOffset = ElevationHelper.getProjectedWidth(sGlobal, offset, superelevation, false);
-        double h = ElevationHelper.getElevation(sGlobal, offset, elevation, superelevation);
+        double h = ElevationHelper.getElevation(sGlobal, offset, elevation, superelevation, shapes);
         lsp.getLanes().get(0).add(pointFactory.getODRGeometryHandler(geom.getClass())
                 .sth2xyzPoint(geom, sGlobal, projectedOffset, h));
         if (!ls.getCenterLane().getRoadMarks().isEmpty()) {
