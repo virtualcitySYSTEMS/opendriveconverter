@@ -34,25 +34,48 @@ public class Transformation {
         return transformedGeometries;
     }
 
+    /**
+     * coordinate system transformation
+     * @param geom geometry
+     * @param sourceCRS source coordinate system
+     * @param targetCRS target coordinate system
+     * @param geoid flag to apply geoid offset
+     * @return transformed geometry
+     * @throws FactoryException
+     * @throws TransformException
+     */
     public static Geometry crsTransform(Geometry geom, CoordinateReferenceSystem sourceCRS,
-            CoordinateReferenceSystem targetCRS) throws FactoryException, TransformException {
+            CoordinateReferenceSystem targetCRS, boolean geoid) throws FactoryException, TransformException {
         MathTransform transform = CRS.findMathTransform(sourceCRS, targetCRS);
-        // TODO flag, when to use GeoidTransformation
-        GeoidTransformation geoidTransformation = GeoidTransformation.getInstance();
-        return geoidTransformation.transformWGSGeoid(JTS.transform(geom, transform));
+        if (geoid) {
+            GeoidTransformation geoidTransformation = GeoidTransformation.getInstance();
+            return geoidTransformation.transformWGSGeoid(JTS.transform(geom, transform));
+        }
+        return JTS.transform(geom, transform);
     }
 
+    /**
+     * coordinate system transformation
+     * @param geoms geometries
+     * @param sourceCRS source coordinate system
+     * @param targetCRS target coordinate system
+     * @param geoid flag to apply geoid offset
+     * @return transformed geometries
+     * @throws FactoryException
+     * @throws TransformException
+     */
     public static ArrayList<Geometry> crsTransform(ArrayList<Geometry> geoms, CoordinateReferenceSystem sourceCRS,
-            CoordinateReferenceSystem targetCRS) throws FactoryException, TransformException {
-        // TODO flag, when to use GeoidTransformation
+            CoordinateReferenceSystem targetCRS, boolean geoid) throws FactoryException, TransformException {
         GeoidTransformation geoidTransformation = GeoidTransformation.getInstance();
         ArrayList<Geometry> transformedGeometries = new ArrayList<>();
         MathTransform transform = CRS.findMathTransform(sourceCRS, targetCRS);
-        //TODO change to parallelStream !!!
-        geoms.stream().forEach(g -> {
+        geoms.parallelStream().forEach(g -> {
             if (!Objects.isNull(g)) {
                 try {
-                    transformedGeometries.add(geoidTransformation.transformWGSGeoid(JTS.transform(g, transform)));
+                    if (geoid) {
+                        transformedGeometries.add(geoidTransformation.transformWGSGeoid(JTS.transform(g, transform)));
+                    }
+                    transformedGeometries.add(JTS.transform(g, transform));
                 } catch (TransformException | FactoryException e) {
                     e.printStackTrace();
                 }

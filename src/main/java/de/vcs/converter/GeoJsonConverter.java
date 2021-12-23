@@ -45,6 +45,7 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
         GeoJsonFormat geojson = new GeoJsonFormat();
         CoordinateReferenceSystem sourceCRS;
         CoordinateReferenceSystem targetCRS;
+        boolean geoid = false;
         CRSAuthorityFactory factory = CRS.getAuthorityFactory(true);
         try {
             sourceCRS = factory.createCoordinateReferenceSystem("EPSG:25832");
@@ -54,7 +55,7 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
                     ArrayList<Geometry> lines = ls.getCenterLane().getGmlGeometries();
                     lines.removeIf(g -> !(g instanceof LineString));
                     try {
-                        lines = Transformation.crsTransform(lines, sourceCRS, targetCRS);
+                        lines = Transformation.crsTransform(lines, sourceCRS, targetCRS, geoid);
                     } catch (FactoryException | TransformException e) {
                         e.printStackTrace();
                     }
@@ -80,6 +81,7 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
         GeoJsonFormat geojson = new GeoJsonFormat();
         CoordinateReferenceSystem sourceCRS;
         CoordinateReferenceSystem targetCRS;
+        boolean geoid = false;
         CRSAuthorityFactory factory = CRS.getAuthorityFactory(true);
         GeometryFactory geometryFactory = new GeometryFactory();
         try {
@@ -95,7 +97,7 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
                             break;
                         }
                         ArrayList<Geometry> geometries = lane.getGmlGeometries();
-                        geometries = Transformation.crsTransform(geometries, sourceCRS, targetCRS);
+                        geometries = Transformation.crsTransform(geometries, sourceCRS, targetCRS, geoid);
                         geometries.stream().forEach(f -> {
                             Coordinate[] coords = f.getCoordinates();
                             int from = lane.getId() < 0 ? 0 : coords.length / 2;
@@ -126,13 +128,14 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
         GeoJsonFormat geojson = new GeoJsonFormat();
         CoordinateReferenceSystem sourceCRS;
         CoordinateReferenceSystem targetCRS;
+        boolean geoid = false;
         CRSAuthorityFactory factory = CRS.getAuthorityFactory(true);
         try {
             sourceCRS = factory.createCoordinateReferenceSystem(odr.getHeader().getGeoReference().getEpsg());
             targetCRS = factory.createCoordinateReferenceSystem("EPSG:4326");
             for (Road road : odr.getRoads()) {
                 ArrayList<Geometry> geometries = road.getGmlGeometries();
-                geometries = Transformation.crsTransform(geometries, sourceCRS, targetCRS);
+                geometries = Transformation.crsTransform(geometries, sourceCRS, targetCRS, geoid);
                 geometries.stream().forEach(f -> {
                     JSONObject feature = createFeature(f);
                     JSONObject properties = getProperties(road);
@@ -156,6 +159,7 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
         GeoJsonFormat geojson = new GeoJsonFormat();
         CoordinateReferenceSystem sourceCRS;
         CoordinateReferenceSystem targetCRS;
+        boolean geoid = false;
         CRSAuthorityFactory factory = CRS.getAuthorityFactory(true);
         try {
             sourceCRS = factory.createCoordinateReferenceSystem("EPSG:25832");
@@ -171,7 +175,7 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
                             ArrayList<Geometry> geometries = roadMarkEntry.getValue().getGmlGeometries();
                             if (!geometries.isEmpty()) {
                                 try {
-                                    geometries = Transformation.crsTransform(geometries, sourceCRS, targetCRS);
+                                    geometries = Transformation.crsTransform(geometries, sourceCRS, targetCRS, geoid);
                                     if (!geometries.isEmpty()) {
                                         geometries.stream().forEach(f -> {
                                             JSONObject feature = createFeature(f);
@@ -207,6 +211,7 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
         GeoJsonFormat geojson = new GeoJsonFormat();
         CoordinateReferenceSystem sourceCRS;
         CoordinateReferenceSystem targetCRS;
+        boolean geoid = false;
         CRSAuthorityFactory factory = CRS.getAuthorityFactory(true);
         try {
             sourceCRS = factory.createCoordinateReferenceSystem("EPSG:25832");
@@ -222,7 +227,7 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
                         }
 //                        if (lane.getType().equals("driving")) {
                         ArrayList<Geometry> geometries = lane.getGmlGeometries();
-                        geometries = Transformation.crsTransform(geometries, sourceCRS, targetCRS);
+                        geometries = Transformation.crsTransform(geometries, sourceCRS, targetCRS, geoid);
                         geometries.stream().forEach(f -> {
                             JSONObject feature = createFeature(f);
                             JSONObject properties = getProperties(lane);
@@ -249,8 +254,10 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
      */
     public static GeoJsonFormat convertLaneSections(OpenDRIVE odr) {
         GeoJsonFormat geojson = new GeoJsonFormat();
+        // TODO from converter config
         CoordinateReferenceSystem sourceCRS;
         CoordinateReferenceSystem targetCRS;
+        boolean geoid = false;
         CRSAuthorityFactory factory = CRS.getAuthorityFactory(true);
         try {
             sourceCRS = factory.createCoordinateReferenceSystem("EPSG:25832");
@@ -259,7 +266,7 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
                 for (Map.Entry<Double, LaneSection> e : road.getLanes().getLaneSections().entrySet()) {
                     LaneSection laneSection = e.getValue();
                     ArrayList<Geometry> geometries = laneSection.getGmlGeometries();
-                    geometries = Transformation.crsTransform(geometries, sourceCRS, targetCRS);
+                    geometries = Transformation.crsTransform(geometries, sourceCRS, targetCRS, geoid);
                     geometries.stream().forEach(f -> {
                         JSONObject feature = createFeature(f);
                         JSONObject properties = getProperties(laneSection);
@@ -285,8 +292,10 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
     public static GeoJsonFormat convertJunctions(OpenDRIVE odr) {
         HashMap<String, ArrayList<Geometry>> junctionMap = new HashMap<>();
         GeoJsonFormat geojson = new GeoJsonFormat();
+        // TODO from converter config
         CoordinateReferenceSystem sourceCRS;
         CoordinateReferenceSystem targetCRS;
+        boolean geoid = false;
         CRSAuthorityFactory factory = CRS.getAuthorityFactory(true);
         GeometryFactory geometryFactory = new GeometryFactory();
         try {
@@ -332,7 +341,7 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
                 // skips overlapping polygons -> FME Buffer is better!
                 // junctionGeometry = junctionGeometry.buffer(0);
 //                }
-                junctionGeometry = Transformation.crsTransform(junctionGeometry, sourceCRS, targetCRS);
+                junctionGeometry = Transformation.crsTransform(junctionGeometry, sourceCRS, targetCRS, geoid);
                 JSONObject feature = createFeature(junctionGeometry);
                 JSONObject properties = new JSONObject();
                 feature.put("properties", properties);
@@ -365,6 +374,7 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
         GeoJsonFormat geojson = new GeoJsonFormat();
         CoordinateReferenceSystem sourceCRS;
         CoordinateReferenceSystem targetCRS;
+        boolean geoid = false;
         CRSAuthorityFactory factory = CRS.getAuthorityFactory(true);
         try {
             sourceCRS = factory.createCoordinateReferenceSystem(odr.getHeader().getGeoReference().getEpsg());
@@ -372,7 +382,7 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
             for (Road road : odr.getRoads()) {
                 for (AbstractObject obj : road.getObjects()) {
                     ArrayList<Geometry> geometries = obj.getGmlGeometries();
-                    geometries = Transformation.crsTransform(geometries, sourceCRS, targetCRS);
+                    geometries = Transformation.crsTransform(geometries, sourceCRS, targetCRS, geoid);
                     geometries.stream().forEach(f -> {
                         JSONObject feature = createFeature(f);
                         JSONObject properties = getProperties(obj);
@@ -402,6 +412,7 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
         GeoJsonFormat geojson = new GeoJsonFormat();
         CoordinateReferenceSystem sourceCRS;
         CoordinateReferenceSystem targetCRS;
+        boolean geoid = false;
         CRSAuthorityFactory factory = CRS.getAuthorityFactory(true);
         try {
             sourceCRS = factory.createCoordinateReferenceSystem(odr.getHeader().getGeoReference().getEpsg());
@@ -409,7 +420,7 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
             for (Road road : odr.getRoads()) {
                 for (Signal signal : road.getSignals().getSignals()) {
                     ArrayList<Geometry> geometries = signal.getGmlGeometries();
-                    geometries = Transformation.crsTransform(geometries, sourceCRS, targetCRS);
+                    geometries = Transformation.crsTransform(geometries, sourceCRS, targetCRS, geoid);
                     geometries.stream().forEach(f -> {
                         JSONObject feature = createFeature(f);
                         JSONObject properties = getProperties(signal);
