@@ -73,7 +73,8 @@ public class TransformationTest {
         try {
             CoordinateReferenceSystem sourceCRS = CRS.decode(src);
             CoordinateReferenceSystem targetCRS = CRS.decode(trg);
-            gt_transformed = Transformation.crsTransform(geom, sourceCRS, targetCRS);
+            boolean geoid = true;
+            gt_transformed = Transformation.crsTransform(geom, sourceCRS, targetCRS, geoid);
         } catch (FactoryException | TransformException e) {
             e.printStackTrace();
         }
