@@ -60,15 +60,16 @@ public class ObjectAreaGenerator extends AbstractAreaGenerator {
         double t = obj.getLinearReference().getT();
         AbstractODRGeometry geom = road.getPlanView().getOdrGeometries().floorEntry(s).getValue();
         Polynom elevation = (Polynom) road.getElevationProfile().getElevations().floorEntry(s).getValue();
-        Polynom superelevation = null;
-        if (!road.getLateralProfile().getSuperElevations().isEmpty()) {
-            superelevation = (Polynom) road.getLateralProfile().getSuperElevations().floorEntry(s).getValue();
-        }
-        TreeMap<Double, TreeMap<Double, AbstractODRGeometry>> shapes = null;
-        if (!road.getLateralProfile().getShapes().isEmpty()) {
-            shapes = road.getLateralProfile().getShapes();
-        }
-        double h = ElevationHelper.getElevation(s, t, elevation, superelevation, shapes);
+//      zOffset relative to reference line --> no superelevation, no shape
+//        Polynom superelevation = null;
+//        if (!road.getLateralProfile().getSuperElevations().isEmpty()) {
+//            superelevation = (Polynom) road.getLateralProfile().getSuperElevations().floorEntry(s).getValue();
+//        }
+//        TreeMap<Double, TreeMap<Double, AbstractODRGeometry>> shapes = null;
+//        if (!road.getLateralProfile().getShapes().isEmpty()) {
+//            shapes = road.getLateralProfile().getShapes();
+//        }
+        double h = ElevationHelper.getElevation(s, t, elevation, null, null);
         h += obj.getIntertialTransform().getzOffset();
         Point point = pointFactory.getODRGeometryHandler(geom.getClass()).sth2xyzPoint(geom, s, t, h);
         double hdg = pointFactory.getODRGeometryHandler(geom.getClass()).calcHdg(geom, s);
@@ -95,15 +96,16 @@ public class ObjectAreaGenerator extends AbstractAreaGenerator {
             double t = obj.getLinearReference().getT();
             AbstractODRGeometry geom = road.getPlanView().getOdrGeometries().floorEntry(s).getValue();
             Polynom elevation = (Polynom) road.getElevationProfile().getElevations().floorEntry(s).getValue();
-            Polynom superelevation = null;
-            if (!road.getLateralProfile().getSuperElevations().isEmpty()) {
-                superelevation = (Polynom) road.getLateralProfile().getSuperElevations().floorEntry(s).getValue();
-            }
-            TreeMap<Double, TreeMap<Double, AbstractODRGeometry>> shapes = null;
-            if (!road.getLateralProfile().getShapes().isEmpty()) {
-                shapes = road.getLateralProfile().getShapes();
-            }
-            double h = ElevationHelper.getElevation(s, t, elevation, superelevation, shapes);
+//          zOffset relative to reference line --> no superelevation, no shape
+//            Polynom superelevation = null;
+//            if (!road.getLateralProfile().getSuperElevations().isEmpty()) {
+//                superelevation = (Polynom) road.getLateralProfile().getSuperElevations().floorEntry(s).getValue();
+//            }
+//            TreeMap<Double, TreeMap<Double, AbstractODRGeometry>> shapes = null;
+//            if (!road.getLateralProfile().getShapes().isEmpty()) {
+//                shapes = road.getLateralProfile().getShapes();
+//            }
+            double h = ElevationHelper.getElevation(s, t, elevation, null, null);
             h += obj.getIntertialTransform().getzOffset();
             // apply elevation of object center point to all object points, to create simple lod1 shape
             Point p1 = pointFactory.getODRGeometryHandler(geom.getClass()).sth2xyzPoint(
@@ -138,7 +140,7 @@ public class ObjectAreaGenerator extends AbstractAreaGenerator {
                     double dz = cornerRoad.getSthPosition().getH(); // relative to ref Line !
                     AbstractODRGeometry geom = road.getPlanView().getOdrGeometries().floorEntry(s).getValue();
                     Polynom elevation = (Polynom) road.getElevationProfile().getElevations().floorEntry(s).getValue();
-                    //  according to standard object height is relative to ref line
+//                  zOffset relative to reference line --> no superelevation, no shape
 //                    Polynom superelevation = null;
 //                    if (!road.getLateralProfile().getSuperElevations().isEmpty()) {
 //                        superelevation = (Polynom) road.getLateralProfile().getSuperElevations().floorEntry(s).getValue();
@@ -165,18 +167,19 @@ public class ObjectAreaGenerator extends AbstractAreaGenerator {
                     AbstractODRGeometry geom = road.getPlanView().getOdrGeometries().floorEntry(s).getValue();
                     Polynom elevation = (Polynom) road.getElevationProfile().getElevations().floorEntry(s).getValue();
                     Polynom superelevation = null;
-                    if (!road.getLateralProfile().getSuperElevations().isEmpty()) {
-                        superelevation = (Polynom) road.getLateralProfile().getSuperElevations().floorEntry(s).getValue();
-                    }
-                    TreeMap<Double, TreeMap<Double, AbstractODRGeometry>> shapes = null;
-                    if (!road.getLateralProfile().getShapes().isEmpty()) {
-                        shapes = road.getLateralProfile().getShapes();
-                    }
+//                  zOffset relative to reference line --> no superelevation, no shape
+//                    if (!road.getLateralProfile().getSuperElevations().isEmpty()) {
+//                        superelevation = (Polynom) road.getLateralProfile().getSuperElevations().floorEntry(s).getValue();
+//                    }
+//                    TreeMap<Double, TreeMap<Double, AbstractODRGeometry>> shapes = null;
+//                    if (!road.getLateralProfile().getShapes().isEmpty()) {
+//                        shapes = road.getLateralProfile().getShapes();
+//                    }
                     Point p = pointFactory.getODRGeometryHandler(geom.getClass()).sth2xyzPoint(
                             geom,
                             s + u,
                             t + v,
-                            ElevationHelper.getElevation(s, t, elevation, superelevation, shapes) + z
+                            ElevationHelper.getElevation(s, t, elevation, null, null) + z
                     );
                     coordinates.add(p.getCoordinate());
                 }

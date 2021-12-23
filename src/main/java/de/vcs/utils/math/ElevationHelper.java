@@ -75,10 +75,41 @@ public class ElevationHelper {
      * @return linear interpolated elevation at given position
      */
     public static double getElevationFromShapes(double s, double t, TreeMap<Double, TreeMap<Double, AbstractODRGeometry>> shapes) {
-        Polynom shapeSR1 = (Polynom) shapes.floorEntry(s).getValue().floorEntry(t).getValue();
-        Polynom shapeSR2 = (Polynom) shapes.ceilingEntry(s).getValue().floorEntry(t).getValue();
+        Polynom shapeSR1 = null;
+        Polynom shapeSR2 = null;
+        TreeMap<Double, AbstractODRGeometry> mapFloor = null;
+        TreeMap<Double, AbstractODRGeometry> mapCeiling = null;
+
+        try {
+            mapFloor = shapes.floorEntry(s).getValue();
+        } catch (NullPointerException e) {
+            // s smaller than 0, should not happen for valid odr file
+            mapFloor = shapes.firstEntry().getValue();
+        }
+        try {
+            mapCeiling = shapes.lastEntry().getValue();
+        } catch (NullPointerException e) {
+            // s greater than the largest key in map
+            mapCeiling = shapes.lastEntry().getValue();
+        }
+        try {
+            shapeSR1 = (Polynom) mapFloor.floorEntry(t).getValue();
+        } catch (NullPointerException e) {
+            // t smaller than lowest t value in map
+            shapeSR1 = (Polynom) mapFloor.firstEntry().getValue();
+        }
+        try {
+            shapeSR2 = (Polynom) mapCeiling.floorEntry(t).getValue();
+        } catch (NullPointerException e) {
+            // t smaller than lowest t value in map
+            shapeSR2 = (Polynom) mapCeiling.firstEntry().getValue();
+        }
         double hSR1 = PolynomHelper.calcPolynomValue(shapeSR1, t - shapeSR1.getLinearReference().getT());
+        if (shapeSR1.equals(shapeSR2)) {
+            return hSR1;
+        }
         double hSR2 = PolynomHelper.calcPolynomValue(shapeSR2, t - shapeSR2.getLinearReference().getT());
+        // linear interpolation
         return ((hSR1 + hSR2) * (s - shapeSR1.getLinearReference().getS())) /
                 (shapeSR2.getLinearReference().getS() - shapeSR1.getLinearReference().getS());
     }
