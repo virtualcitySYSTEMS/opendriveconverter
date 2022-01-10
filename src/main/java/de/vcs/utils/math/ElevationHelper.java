@@ -24,16 +24,16 @@ public class ElevationHelper {
             double ds = s - elevation.getLinearReference().getS();
             sHeight = PolynomHelper.calcPolynomValue(elevation, ds);
         }
-        double tHeight = 0.0;
+        double alpha = 0.0;
         if (superelevation != null && !level) {
             double ds = s - superelevation.getLinearReference().getS();
-            tHeight = t * Math.sin(PolynomHelper.calcPolynomValue(superelevation, ds));
+            alpha = PolynomHelper.calcPolynomValue(superelevation, ds);
         }
         double shapeHeight = 0.0;
         if (shapes != null) {
             shapeHeight = getElevationFromShapes(s, t, shapes);
         }
-        return sHeight + tHeight + shapeHeight;
+        return sHeight + t * Math.sin(alpha) + shapeHeight * Math.cos(alpha);
     }
 
     /**
@@ -87,7 +87,7 @@ public class ElevationHelper {
             mapFloor = shapes.firstEntry().getValue();
         }
         try {
-            mapCeiling = shapes.lastEntry().getValue();
+            mapCeiling = shapes.ceilingEntry(s).getValue();
         } catch (NullPointerException e) {
             // s greater than the largest key in map
             mapCeiling = shapes.lastEntry().getValue();
@@ -109,8 +109,9 @@ public class ElevationHelper {
             return hSR1;
         }
         double hSR2 = PolynomHelper.calcPolynomValue(shapeSR2, t - shapeSR2.getLinearReference().getT());
+        double sSR1 = shapeSR1.getLinearReference().getS();
+        double sSR2 = shapeSR2.getLinearReference().getS();
         // linear interpolation
-        return ((hSR1 + hSR2) * (s - shapeSR1.getLinearReference().getS())) /
-                (shapeSR2.getLinearReference().getS() - shapeSR1.getLinearReference().getS());
+        return ((hSR1 * (sSR2 - s)) + (hSR2 * (s - sSR1))) / (sSR2- sSR1);
     }
 }
