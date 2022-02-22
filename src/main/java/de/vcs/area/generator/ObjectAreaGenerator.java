@@ -76,6 +76,9 @@ public class ObjectAreaGenerator extends AbstractAreaGenerator {
         if (obj.getOrientation() != null && obj.getOrientation().equals(Orientation.MINUS.toString())) {
             hdg += Math.PI / 2;
         }
+        if (t < 0) {
+            hdg += Math.PI;
+        }
         obj.getIntertialTransform().setHdg(hdg + obj.getStTransform().getHdg());
         return point;
     }
