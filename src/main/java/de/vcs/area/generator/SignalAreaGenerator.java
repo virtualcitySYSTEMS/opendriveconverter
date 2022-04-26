@@ -10,6 +10,8 @@ import de.vcs.utils.math.ElevationHelper;
 import de.vcs.utils.transformation.PointFactory;
 import org.locationtech.jts.geom.Point;
 
+import java.util.TreeMap;
+
 public class SignalAreaGenerator extends AbstractAreaGenerator implements AreaGenerator {
 
     Road road;
@@ -39,13 +41,16 @@ public class SignalAreaGenerator extends AbstractAreaGenerator implements AreaGe
         double t = signal.getLinearReference().getT();
         AbstractODRGeometry geom = road.getPlanView().getOdrGeometries().floorEntry(s).getValue();
         Polynom elevation = (Polynom) road.getElevationProfile().getElevations().floorEntry(s).getValue();
-        Polynom superelevation = null;
-        try {
-            superelevation = (Polynom) road.getLateralProfile().getSuperElevations().floorEntry(s).getValue();
-        } catch (Exception e) {
-            ODRLogger.getInstance().error("Error creating Signal. Found no superelevation for road with id " + road.getId());
-        }
-        double h =  ElevationHelper.getElevation(s, t, elevation, superelevation);
+//      zOffset relative to reference line --> no superelevation, no shape
+//        Polynom superelevation = null;
+//        if (!road.getLateralProfile().getSuperElevations().isEmpty()) {
+//            superelevation = (Polynom) road.getLateralProfile().getSuperElevations().floorEntry(s).getValue();
+//        }
+//        TreeMap<Double, TreeMap<Double, AbstractODRGeometry>> shapes = null;
+//        if (!road.getLateralProfile().getShapes().isEmpty()) {
+//            shapes = road.getLateralProfile().getShapes();
+//        }
+        double h =  ElevationHelper.getElevation(s, t, elevation, null, null);
         h += signal.getInertialTransform().getzOffset();
         Point point = pointFactory.getODRGeometryHandler(geom.getClass()).sth2xyzPoint(geom, s, t, h);
         double hdg = pointFactory.getODRGeometryHandler(geom.getClass()).calcHdg(geom, s);
