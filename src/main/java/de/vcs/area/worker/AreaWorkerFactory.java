@@ -1,8 +1,8 @@
 package de.vcs.area.worker;
 
 import de.vcs.area.generator.AreaGenerator;
-import org.citydb.concurrent.Worker;
-import org.citydb.concurrent.WorkerFactory;
+import org.citydb.util.concurrent.Worker;
+import org.citydb.util.concurrent.WorkerFactory;
 
 public class AreaWorkerFactory implements WorkerFactory<AreaGenerator> {
 

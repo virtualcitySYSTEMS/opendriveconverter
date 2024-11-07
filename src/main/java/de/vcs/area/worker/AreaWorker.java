@@ -2,7 +2,8 @@ package de.vcs.area.worker;
 
 import de.vcs.area.generator.AreaGenerator;
 import de.vcs.utils.log.ODRLogger;
-import org.citydb.concurrent.DefaultWorker;
+import org.citydb.util.concurrent.DefaultWorker;
+
 
 public class AreaWorker extends DefaultWorker<AreaGenerator> {
 

@@ -1,38 +1,66 @@
 plugins {
-    id 'java-library'
     id 'java'
-    id "com.jfrog.artifactory" version "4.13.0"
+    id 'application'
+    id 'com.github.johnrengelman.shadow' version '8.1.0'
+    id 'com.github.breadmoirai.github-release' version '2.2.12'
 }
 
-group 'oder'
-version '1.0-SNAPSHOT'
+group = 'vcs.odr'
+version = '1.0.0'
 
-sourceCompatibility = 1.8
+application {
+    mainClass = 'de.vcs.main.MainCLI'
+}
 
 repositories {
-    //due to wrong uploads to mavencentral geotools repo must appear on top of the list
     maven {
         url 'https://repo.osgeo.org/repository/release'
     }
     maven {
-        url 'https://citydb.jfrog.io/artifactory/maven'
+        url 'https://gitlab.lrz.de/api/v4/projects/150792/packages/maven'
     }
     maven {
-        url 'http://artifactory/artifactory/libs-snapshot-local'
+        url 'https://maven.pkg.github.com/virtualcitySYSTEMS/opendrive4j'
     }
     mavenCentral()
 }
 
 dependencies {
-    testCompile group: 'junit', name: 'junit', version: '4.12'
-    compile 'odr:opendrive4j:0.1.0-SNAPSHOT'
-    compile 'org.xmlobjects.gml:gml-objects:0.9.0'
-    compile 'org.citydb:impexp-core:4.3.0'
-    compile 'org.geotools:gt-epsg-hsql:22.2'
-    compile 'org.geotools:gt-epsg-extension:22.2'
-    compile 'org.geotools:gt-referencing:22.2'
-    compile 'org.geotools:gt-geometry:22.2'
-    compile 'org.geotools:gt-geojson:22.2'
-    compile 'org.locationtech.jts:jts-core:1.16.1'
-    compile 'org.locationtech.jts.io:jts-io-common:1.16.1'
+    testImplementation group: 'junit', name: 'junit', version: '4.13.2'
+    implementation 'vcs.odr:opendrive4j:1.0.0'
+    implementation 'org.xmlobjects.gml:gml-objects:0.9.0'
+    implementation 'org.citydb:impexp-core:5.4.0'
+    implementation 'org.geotools:gt-epsg-hsql:29.2'
+    implementation 'org.geotools:gt-epsg-extension:29.2'
+    implementation 'org.geotools:gt-referencing:29.2'
+    implementation 'org.geotools:gt-geometry:24.6'
+    implementation 'org.geotools:gt-geojson:29.2'
+    implementation 'org.locationtech.jts:jts-core:1.19.0'
+    implementation 'org.locationtech.jts.io:jts-io-common:1.19.0'
 }
+
+shadowJar {
+    archiveBaseName = 'vcs-odr-converter'
+    archiveVersion = version
+    archiveClassifier = ''  // Optional: Wenn du keinen Zusatz wie "all" im Dateinamen haben willst
+    mergeServiceFiles() // Hilft, Service-Loader-Dateien zu kombinieren
+    manifest {
+        attributes(
+                'Main-Class': 'de.vcs.main.MainCLI'  // Hauptklasse für den Einstiegspunkt
+        )
+    }
+}
+
+githubRelease {
+    token = project.findProperty("repo.token") ?: System.getenv("REPO_TOKEN")
+    owner = "virtualcitySYSTEMS"
+    repo = "opendriveconverter"
+    tagName = "v${project.version}"
+    releaseName = "Release ${project.version}"
+    body = "Dies ist ein automatisiertes Release für Version ${project.version}"
+    draft = false
+    prerelease = false
+    releaseAssets = [file("${buildDir}/libs/${shadowJar.archiveBaseName.get()}-${version}.jar")]
+}
+
+

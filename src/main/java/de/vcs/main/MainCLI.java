@@ -7,6 +7,7 @@ import de.vcs.area.worker.AreaWorkerFactory;
 import de.vcs.area.worker.AreaWorkerPool;
 import de.vcs.converter.FormatConverter;
 import de.vcs.converter.GeoJsonConverter;
+import de.vcs.converter.GeoJsonFormat;
 import de.vcs.model.odr.core.OpenDRIVE;
 import de.vcs.utils.log.ODRLogger;
 import org.xmlobjects.XMLObjects;
@@ -42,12 +43,7 @@ public class MainCLI {
 
     public static void main(String[] args) {
         try {
-            MainCLI mainCLI = new MainCLI("src/main/resources/2021-10-26_1500_PLIMOS_Grafing_Prio1.xodr",
-                    "src/main/resources/2021-10-26_1500_PLIMOS_Grafing_Prio1");
-//            MainCLI mainCLI = new MainCLI("src/main/resources/2020-06-19_SAVe_Ingolstadt_Prio4.xodr",
-//                    "src/main/resources/2020-06-19_SAVe_Ingolstadt_Prio4");
-//            MainCLI mainCLI = new MainCLI("src/main/resources/2020-09-21_SAVe_Ingolstadt_Update2_Prio1-6.xodr",
-//                    "src/main/resources/2020-09-21_SAVe_Ingolstadt_Update2_Prio1-6");
+            MainCLI mainCLI = new MainCLI(args[0], args[1]);
             mainCLI.doMain();
         } catch (Exception e) {
             e.printStackTrace();
@@ -104,7 +100,7 @@ public class MainCLI {
     }
 
     private void writeODRFile(OpenDRIVE odr) {
-        List<FormatConverter> converters = new ArrayList<>();
+        List<FormatConverter<GeoJsonFormat>> converters = new ArrayList<>();
         if (outputFile.exists() || outputFile.mkdir()) {
             System.out.println("Writing Output in: " + outputFile.getAbsolutePath());
             converters.add(new GeoJsonConverter(GeoJsonConverter::convertReferenceLine,

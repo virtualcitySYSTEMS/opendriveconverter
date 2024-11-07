@@ -93,7 +93,9 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
                     LaneSection laneSection = e.getValue();
                     for (Map.Entry<Integer, Lane> entry : ODRHelper.getLanes(laneSection).entrySet()) {
                         Lane lane = entry.getValue();
-                        if (!road.getJunction().equals("-1") && lane.getType().equals("driving")) {
+                        String junction = road.getJunction();
+                        String laneType = lane.getType();
+                        if (junction != null && !junction.equals("-1") && laneType != null && laneType.equals("driving")) {
                             break;
                         }
                         ArrayList<Geometry> geometries = lane.getGmlGeometries();
@@ -222,7 +224,9 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
                     LaneSection laneSection = e.getValue();
                     for (Map.Entry<Integer, Lane> entry : ODRHelper.getLanes(laneSection).entrySet()) {
                         Lane lane = entry.getValue();
-                        if (!road.getJunction().equals("-1") && lane.getType().equals("driving")) {
+                        String junction = road.getJunction();
+                        String laneType = lane.getType();
+                        if (junction != null && !junction.equals("-1") && laneType != null && laneType.equals("driving")) {
                             break;
                         }
 //                        if (lane.getType().equals("driving")) {
@@ -309,7 +313,8 @@ public class GeoJsonConverter extends FormatConverter<GeoJsonFormat> {
                         for (Map.Entry<Integer, Lane> entry : ODRHelper.getLanes(laneSection).entrySet()) {
                             Integer laneId = entry.getKey();
                             Lane lane = entry.getValue();
-                            if (lane.getType().equals("driving")) {
+                            String laneType = lane.getType();
+                            if (laneType != null && laneType.equals("driving")) {
                                 ArrayList<Geometry> geometries = lane.getGmlGeometries();
                                 putConnectingRoads(road.getJunction(), geometries, junctionMap);
                             }
