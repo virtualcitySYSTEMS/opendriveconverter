@@ -51,6 +51,10 @@ shadowJar {
     }
 }
 
+tasks.named('githubRelease') {
+    dependsOn tasks.named('shadowJar')
+}
+
 githubRelease {
     token = project.findProperty("repo.token") ?: System.getenv("REPO_TOKEN")
     owner = "virtualcitySYSTEMS"
