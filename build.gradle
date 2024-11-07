@@ -42,11 +42,11 @@ dependencies {
 shadowJar {
     archiveBaseName = 'vcs-odr-converter'
     archiveVersion = version
-    archiveClassifier = ''  // Optional: Wenn du keinen Zusatz wie "all" im Dateinamen haben willst
-    mergeServiceFiles() // Hilft, Service-Loader-Dateien zu kombinieren
+    archiveClassifier = ''
+    mergeServiceFiles()
     manifest {
         attributes(
-                'Main-Class': 'de.vcs.main.MainCLI'  // Hauptklasse für den Einstiegspunkt
+                'Main-Class': 'de.vcs.main.MainCLI'
         )
     }
 }
@@ -60,7 +60,10 @@ githubRelease {
     body = "Dies ist ein automatisiertes Release für Version ${project.version}"
     draft = false
     prerelease = false
-    releaseAssets = [file("${buildDir}/libs/${shadowJar.archiveBaseName.get()}-${version}.jar")]
+
+    releaseAssets = [
+            file(tasks.named('shadowJar').get().archiveFile)
+    ]
 }
 
 
