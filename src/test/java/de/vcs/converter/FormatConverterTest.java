@@ -66,7 +66,7 @@ public class FormatConverterTest {
         File testObjectsPolygon = new File("src/main/resources/testObjectsPolygon.json");
 
 
-        List<FormatConverter> converters = new ArrayList<>();
+        List<FormatConverter<GeoJsonFormat>> converters = new ArrayList<>();
         converters.add(new GeoJsonConverter(GeoJsonConverter::convertReferenceLine, testRoadRefLine));
 //        converters.add(new GeoJsonConverter(GeoJsonConverter::convertRoads, testRoadPolygon));
         converters.add(new GeoJsonConverter(GeoJsonConverter::convertLanes, testLanePolygon));
